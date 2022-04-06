@@ -1479,6 +1479,12 @@ void ClangdLSPServer::onAST(const ASTParams &Params,
   Server->getAST(Params.textDocument.uri.file(), Params.range, std::move(CB));
 }
 
+void ClangdLSPServer::onRun3c(Callback<llvm::Optional<_3CStats>> Reply) {
+  _3CStats ST;
+  ST.Details="Hello from the beautiful server Clangd";
+  Reply(std::move(ST));
+
+}
 ClangdLSPServer::ClangdLSPServer(class Transport &Transp,
                                  const ThreadsafeFS &TFS,
                                  const ClangdLSPServer::Options &Opts)
@@ -1502,6 +1508,7 @@ ClangdLSPServer::ClangdLSPServer(class Transport &Transp,
   MsgHandler->bind("initialized", &ClangdLSPServer::onInitialized);
   MsgHandler->bind("shutdown", &ClangdLSPServer::onShutdown);
   MsgHandler->bind("sync", &ClangdLSPServer::onSync);
+  MsgHandler->bind("textDocument/run3c",&ClangdLSPServer::onRun3c);
   MsgHandler->bind("textDocument/rangeFormatting", &ClangdLSPServer::onDocumentRangeFormatting);
   MsgHandler->bind("textDocument/onTypeFormatting", &ClangdLSPServer::onDocumentOnTypeFormatting);
   MsgHandler->bind("textDocument/formatting", &ClangdLSPServer::onDocumentFormatting);
@@ -1746,6 +1753,7 @@ void ClangdLSPServer::reparseOpenFilesIfNeeded(
                             encodeVersion(Draft->Version),
                             WantDiagnostics::Auto);
 }
+
 
 } // namespace clangd
 } // namespace clang

@@ -162,6 +162,7 @@ private:
   /// This is a clangd extension. Provides a json tree representing memory usage
   /// hierarchy.
   void onMemoryUsage(Callback<MemoryTree>);
+  void onRun3c(Callback<llvm::Optional<_3CStats>>);
 
   std::vector<Fix> getFixes(StringRef File, const clangd::Diagnostic &D);
 

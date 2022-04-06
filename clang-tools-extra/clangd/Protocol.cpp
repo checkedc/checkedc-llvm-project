@@ -1393,6 +1393,13 @@ llvm::json::Value toJSON(const ASTNode &N) {
   return Result;
 }
 
+
+llvm::json::Value toJSON(const _3CStats &ST) {
+  llvm::json::Object Reply{
+    {"details",ST.Details}
+  };
+  return Reply;
+}
 llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const ASTNode &Root) {
   std::function<void(const ASTNode &, unsigned)> Print = [&](const ASTNode &N,
                                                              unsigned Level) {
