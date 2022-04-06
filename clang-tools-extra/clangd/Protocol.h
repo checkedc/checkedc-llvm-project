@@ -1696,6 +1696,11 @@ struct ASTParams {
 };
 bool fromJSON(const llvm::json::Value &, ASTParams &, llvm::json::Path);
 
+
+struct _3CStats {
+  std::string Details;
+};
+llvm::json::Value toJSON(const _3CStats &);
 /// Simplified description of a clang AST node.
 /// This is clangd's internal representation of C++ code.
 struct ASTNode {
