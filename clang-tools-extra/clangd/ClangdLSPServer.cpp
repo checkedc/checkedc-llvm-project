@@ -1482,13 +1482,14 @@ void ClangdLSPServer::onAST(const ASTParams &Params,
 
 void ClangdLSPServer::onRun3c(Callback<llvm::Optional<_3CStats>> Reply) {
   _3CStats ST;
-  ST.Details="Hello from the beautiful server Clangd";
+  ST.Details="You just ran the 3C command.";
   Reply(std::move(ST));
   _3CInter.parseASTs();
   _3CInter.addVariables();
   _3CInter.buildInitialConstraints();
   _3CInter.solveConstraints();
   _3CInter.writeAllConvertedFilesToDisk();
+  elog("Done converting successfully");
 
 }
 ClangdLSPServer::ClangdLSPServer(class Transport &Transp,
