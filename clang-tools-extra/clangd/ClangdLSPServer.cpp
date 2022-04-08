@@ -18,6 +18,7 @@
 #include "SourceCode.h"
 #include "TUScheduler.h"
 #include "URI.h"
+#include "clang/3C/3C.h"
 #include "refactor/Tweak.h"
 #include "support/Context.h"
 #include "support/MemoryTree.h"
@@ -1483,11 +1484,17 @@ void ClangdLSPServer::onRun3c(Callback<llvm::Optional<_3CStats>> Reply) {
   _3CStats ST;
   ST.Details="Hello from the beautiful server Clangd";
   Reply(std::move(ST));
+  _3CInter.parseASTs();
+  _3CInter.addVariables();
+  _3CInter.buildInitialConstraints();
+  _3CInter.solveConstraints();
+  _3CInter.writeAllConvertedFilesToDisk();
 
 }
 ClangdLSPServer::ClangdLSPServer(class Transport &Transp,
                                  const ThreadsafeFS &TFS,
-                                 const ClangdLSPServer::Options &Opts)
+                                 const ClangdLSPServer::Options &Opts,
+                                 _3CInterface &_3CInterface)
     : ShouldProfile(/*Period=*/std::chrono::minutes(5),
                     /*Delay=*/std::chrono::minutes(1)),
       ShouldCleanupMemory(/*Period=*/std::chrono::minutes(1),
@@ -1495,7 +1502,9 @@ ClangdLSPServer::ClangdLSPServer(class Transport &Transp,
       BackgroundContext(Context::current().clone()), Transp(Transp),
       MsgHandler(new MessageHandler(*this)), TFS(TFS),
       SupportedSymbolKinds(defaultSymbolKinds()),
-      SupportedCompletionItemKinds(defaultCompletionItemKinds()), Opts(Opts) {
+      SupportedCompletionItemKinds(defaultCompletionItemKinds()), Opts(Opts)
+      , _3CInter(_3CInterface)
+{
   if (Opts.ConfigProvider) {
     assert(!Opts.ContextProvider &&
            "Only one of ConfigProvider and ContextProvider allowed!");

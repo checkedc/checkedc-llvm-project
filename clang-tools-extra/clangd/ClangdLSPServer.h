@@ -15,6 +15,7 @@
 #include "FindSymbols.h"
 #include "GlobalCompilationDatabase.h"
 #include "Protocol.h"
+#include "clang/3C/3C.h"
 #include "Transport.h"
 #include "support/Context.h"
 #include "support/MemoryTree.h"
@@ -66,7 +67,7 @@ public:
   };
 
   ClangdLSPServer(Transport &Transp, const ThreadsafeFS &TFS,
-                  const ClangdLSPServer::Options &Opts);
+                  const ClangdLSPServer::Options &Opts,_3CInterface &_3CInterface);
   /// The destructor blocks on any outstanding background tasks.
   ~ClangdLSPServer();
 
@@ -319,6 +320,8 @@ private:
   llvm::Optional<OverlayCDB> CDB;
   // The ClangdServer is created by the "initialize" LSP method.
   llvm::Optional<ClangdServer> Server;
+
+  _3CInterface &_3CInter;
 };
 } // namespace clangd
 } // namespace clang

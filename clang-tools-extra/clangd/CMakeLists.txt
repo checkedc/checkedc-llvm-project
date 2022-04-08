@@ -135,6 +135,7 @@ clang_target_link_libraries(clangDaemon
   clangAST
   clangASTMatchers
   clangBasic
+  clang3C
   clangDriver
   clangFormat
   clangFrontend

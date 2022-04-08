@@ -20,6 +20,7 @@ clang_target_link_libraries(clangd
   PRIVATE
   clangAST
   clangBasic
+    clang3C
   clangFormat
   clangFrontend
   clangLex

@@ -1696,7 +1696,11 @@ struct ASTParams {
 };
 bool fromJSON(const llvm::json::Value &, ASTParams &, llvm::json::Path);
 
+struct _3CParams{
+  TextDocumentIdentifier textDocument;
+};
 
+bool fromJSON(const llvm::json::Value &, _3CParams &, llvm::json::Path);
 struct _3CStats {
   std::string Details;
 };
