@@ -1393,6 +1393,11 @@ llvm::json::Value toJSON(const ASTNode &N) {
   return Result;
 }
 
+bool fromJSON(const llvm::json::Value &Params, _3CParams &R,
+              llvm::json::Path P) {
+  llvm::json::ObjectMapper O(Params, P);
+  return O && O.map("textDocument", R.textDocument);
+}
 
 llvm::json::Value toJSON(const _3CStats &ST) {
   llvm::json::Object Reply{

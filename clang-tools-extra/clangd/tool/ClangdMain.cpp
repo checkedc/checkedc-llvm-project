@@ -52,6 +52,7 @@
 
 #ifdef __GLIBC__
 #include <malloc.h>
+#include <clang/3C/3CGlobalOptions.h>
 #endif
 
 namespace clang {
@@ -80,8 +81,9 @@ OptionCategory CompileCommands("clangd compilation flags options");
 OptionCategory Features("clangd feature options");
 OptionCategory Misc("clangd miscellaneous options");
 OptionCategory Protocol("clangd protocol and logging options");
+OptionCategory _3CCategory("3C type flags some of em");
 OptionCategory Retired("clangd flags no longer in use");
-const OptionCategory *ClangdCategories[] = {&Features, &Protocol,
+const OptionCategory *ClangdCategories[] = {&Features, &Protocol,&_3CCategory,
                                             &CompileCommands, &Misc, &Retired};
 
 template <typename T> class RetiredFlag {
@@ -150,6 +152,12 @@ opt<bool> AllScopesCompletion{
     init(true),
 };
 
+opt<bool> AddAllTypes{
+    "alltypes",
+    cat(_3CCategory),
+    desc("If set we convert all the types of pointers present"),
+    init(false),
+};
 opt<bool> ShowOrigins{
     "debug-origin",
     cat(Features),
@@ -735,6 +743,7 @@ clangd accepts flags on the commandline, and in the CLANGD_FLAGS environment var
       // the rest of clangd so we make sure the path is absolute before
       // continuing.
       llvm::SmallString<128> Path(CompileCommandsDir);
+
       if (std::error_code EC = llvm::sys::fs::make_absolute(Path)) {
         elog("Error while converting the relative path specified by "
              "--compile-commands-dir to an absolute path: {0}. The argument "
@@ -912,8 +921,41 @@ clangd accepts flags on the commandline, and in the CLANGD_FLAGS environment var
     TransportLayer = createPathMappingTransport(std::move(TransportLayer),
                                                 std::move(*Mappings));
   }
-
-  ClangdLSPServer LSPServer(*TransportLayer, TFS, Opts);
+  llvm::Expected<tooling::CommonOptionsParser> ExpectedOptionsParser =
+      tooling::CommonOptionsParser::create(argc,(const char **)argv,_3CCategory,
+                                           llvm::cl::ZeroOrMore);
+  if (!ExpectedOptionsParser) {
+    llvm::errs() << "3c: Error(s) parsing command-line arguments:\n"
+                 << llvm::toString(ExpectedOptionsParser.takeError());
+    return 1;
+  }
+  tooling::CommonOptionsParser &OptionsParser = *ExpectedOptionsParser;
+  struct _3COptions CcOptions;
+  CcOptions.AllTypes=AddAllTypes;
+  CcOptions.AddCheckedRegions=true;
+  CcOptions.WildPtrInfoJson="output.json";
+  CcOptions.DumpIntermediate=true;
+  CcOptions.Verbose=true;
+  CcOptions.AllocatorFunctions = {};
+  std::string Msg;
+  std::vector<std::string> Buffer;
+  auto bye = Opts.ResourceDir;
+  std::unique_ptr<tooling::CompilationDatabase> CompDB(
+      tooling::CompilationDatabase::autoDetectFromDirectory(CompileCommandsDir,
+                                                         Msg)
+  );
+  tooling::CompilationDatabase &_CompDB = *CompDB;
+  std::unique_ptr<_3CInterface> _3CInterfacePtr(
+      _3CInterface::create(CcOptions, CompDB->getAllFiles(),
+                           &(_CompDB)));
+  if (!_3CInterfacePtr) {
+    // _3CInterface::create has already printed an error message. Just exit.
+    return 1;
+  }
+  // See clang/docs/checkedc/3C/clang-tidy.md#_3c-name-prefix
+  // NOLINTNEXTLINE(readability-identifier-naming)
+  _3CInterface &_3CInter = *_3CInterfacePtr;
+  ClangdLSPServer LSPServer(*TransportLayer, TFS, Opts,_3CInter);
   llvm::set_thread_name("clangd.main");
   int ExitCode = LSPServer.run()
                      ? 0
