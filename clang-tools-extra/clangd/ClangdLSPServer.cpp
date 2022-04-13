@@ -18,7 +18,9 @@
 #include "SourceCode.h"
 #include "TUScheduler.h"
 #include "URI.h"
+#ifdef LSP3C
 #include "clang/3C/3C.h"
+#endif
 #include "refactor/Tweak.h"
 #include "support/Context.h"
 #include "support/MemoryTree.h"
@@ -1479,7 +1481,7 @@ void ClangdLSPServer::onAST(const ASTParams &Params,
                             Callback<llvm::Optional<ASTNode>> CB) {
   Server->getAST(Params.textDocument.uri.file(), Params.range, std::move(CB));
 }
-
+#ifdef LSP3C
 void ClangdLSPServer::onRun3c(Callback<llvm::Optional<_3CStats>> Reply) {
   _3CStats ST;
   ST.Details="You just ran the 3C command.";
@@ -1492,10 +1494,14 @@ void ClangdLSPServer::onRun3c(Callback<llvm::Optional<_3CStats>> Reply) {
   elog("Done converting successfully");
 
 }
+#endif
 ClangdLSPServer::ClangdLSPServer(class Transport &Transp,
                                  const ThreadsafeFS &TFS,
-                                 const ClangdLSPServer::Options &Opts,
-                                 _3CInterface &_3CInterface)
+#ifdef LSP3C
+                                 const ClangdLSPServer::Options &Opts, _3CInterface &_3CInterface)
+#else
+                                 const ClangdLSPServer::Options &Opts)
+#endif
     : ShouldProfile(/*Period=*/std::chrono::minutes(5),
                     /*Delay=*/std::chrono::minutes(1)),
       ShouldCleanupMemory(/*Period=*/std::chrono::minutes(1),
@@ -1518,7 +1524,9 @@ ClangdLSPServer::ClangdLSPServer(class Transport &Transp,
   MsgHandler->bind("initialized", &ClangdLSPServer::onInitialized);
   MsgHandler->bind("shutdown", &ClangdLSPServer::onShutdown);
   MsgHandler->bind("sync", &ClangdLSPServer::onSync);
+#ifdef LSP3C
   MsgHandler->bind("textDocument/run3c",&ClangdLSPServer::onRun3c);
+#endif
   MsgHandler->bind("textDocument/rangeFormatting", &ClangdLSPServer::onDocumentRangeFormatting);
   MsgHandler->bind("textDocument/onTypeFormatting", &ClangdLSPServer::onDocumentOnTypeFormatting);
   MsgHandler->bind("textDocument/formatting", &ClangdLSPServer::onDocumentFormatting);
