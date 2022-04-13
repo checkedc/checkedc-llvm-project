@@ -20,6 +20,10 @@
 #include "index/Serialization.h"
 #include "index/remote/Client.h"
 #include "refactor/Rename.h"
+#ifdef LSP3C
+#include <clang/3C/3CGlobalOptions.h>
+#include "clang/3C/3C.h"
+#endif
 #include "support/Path.h"
 #include "support/Shutdown.h"
 #include "support/ThreadsafeFS.h"
@@ -52,7 +56,6 @@
 
 #ifdef __GLIBC__
 #include <malloc.h>
-#include <clang/3C/3CGlobalOptions.h>
 #endif
 
 namespace clang {
@@ -914,6 +917,7 @@ clangd accepts flags on the commandline, and in the CLANGD_FLAGS environment var
     TransportLayer = createPathMappingTransport(std::move(TransportLayer),
                                                 std::move(*Mappings));
   }
+#ifdef LSP3C
   struct _3COptions CcOptions;
   CcOptions.AllTypes=true;
   CcOptions.AddCheckedRegions=true;
@@ -937,7 +941,13 @@ clangd accepts flags on the commandline, and in the CLANGD_FLAGS environment var
     return 1;
   }
   _3CInterface &_3CInter = *_3CInterfacePtr;
-  ClangdLSPServer LSPServer(*TransportLayer, TFS, Opts,_3CInter);
+#endif
+  ClangdLSPServer LSPServer(*TransportLayer, TFS,
+#ifdef LSP3C
+                            Opts,_3CInter);
+#else
+                            Opts);
+#endif
   llvm::set_thread_name("clangd.main");
   int ExitCode = LSPServer.run()
                      ? 0

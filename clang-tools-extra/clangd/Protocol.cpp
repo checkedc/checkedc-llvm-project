@@ -1392,7 +1392,7 @@ llvm::json::Value toJSON(const ASTNode &N) {
     Result["range"] = *N.range;
   return Result;
 }
-
+#ifdef LSP3C
 bool fromJSON(const llvm::json::Value &Params, _3CParams &R,
               llvm::json::Path P) {
   llvm::json::ObjectMapper O(Params, P);
@@ -1405,6 +1405,7 @@ llvm::json::Value toJSON(const _3CStats &ST) {
   };
   return Reply;
 }
+#endif
 llvm::raw_ostream &operator<<(llvm::raw_ostream &OS, const ASTNode &Root) {
   std::function<void(const ASTNode &, unsigned)> Print = [&](const ASTNode &N,
                                                              unsigned Level) {

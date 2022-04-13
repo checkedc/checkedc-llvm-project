@@ -15,7 +15,9 @@
 #include "FindSymbols.h"
 #include "GlobalCompilationDatabase.h"
 #include "Protocol.h"
+#ifdef LSP3C
 #include "clang/3C/3C.h"
+#endif
 #include "Transport.h"
 #include "support/Context.h"
 #include "support/MemoryTree.h"
@@ -67,7 +69,11 @@ public:
   };
 
   ClangdLSPServer(Transport &Transp, const ThreadsafeFS &TFS,
+#ifdef LSP3C
                   const ClangdLSPServer::Options &Opts,_3CInterface &_3CInterface);
+#else
+                  const ClangdLSPServer::Options &Opts);
+#endif
   /// The destructor blocks on any outstanding background tasks.
   ~ClangdLSPServer();
 
@@ -163,7 +169,9 @@ private:
   /// This is a clangd extension. Provides a json tree representing memory usage
   /// hierarchy.
   void onMemoryUsage(Callback<MemoryTree>);
+#ifdef LSP3C
   void onRun3c(Callback<llvm::Optional<_3CStats>>);
+#endif
 
   std::vector<Fix> getFixes(StringRef File, const clangd::Diagnostic &D);
 
@@ -320,8 +328,9 @@ private:
   llvm::Optional<OverlayCDB> CDB;
   // The ClangdServer is created by the "initialize" LSP method.
   llvm::Optional<ClangdServer> Server;
-
+#ifdef LSP3C
   _3CInterface &_3CInter;
+#endif
 };
 } // namespace clangd
 } // namespace clang
