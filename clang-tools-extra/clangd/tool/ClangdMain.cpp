@@ -921,8 +921,7 @@ clangd accepts flags on the commandline, and in the CLANGD_FLAGS environment var
   struct _3COptions CcOptions;
   CcOptions.AllTypes=true;
   CcOptions.AddCheckedRegions=true;
-  CcOptions.WildPtrInfoJson="output.json";
-  CcOptions.DumpIntermediate=true;
+  CcOptions.DumpIntermediate=false;
   CcOptions.OutputPostfix="checked";
   CcOptions.AllocatorFunctions = {};
 

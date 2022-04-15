@@ -283,7 +283,16 @@ ClangdServer::createConfiguredContextProvider(const config::Provider *Provider,
     return (*I)(Path);
   };
 }
-
+#ifdef LSP3C
+void ClangdServer::execute3CCommand(_3CInterface &LSPInter) {
+    LSPInter.parseASTs();
+    LSPInter.addVariables();
+    LSPInter.buildInitialConstraints();
+    LSPInter.solveConstraints();
+    LSPInter.writeAllConvertedFilesToDisk();
+    elog("exiting the ClangdServer after this");
+}
+#endif
 void ClangdServer::removeDocument(PathRef File) { WorkScheduler.remove(File); }
 
 void ClangdServer::codeComplete(PathRef File, Position Pos,

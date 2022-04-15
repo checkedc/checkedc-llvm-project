@@ -1484,14 +1484,11 @@ void ClangdLSPServer::onAST(const ASTParams &Params,
 #ifdef LSP3C
 void ClangdLSPServer::onRun3c(Callback<llvm::Optional<_3CStats>> Reply) {
   _3CStats ST;
-  ST.Details="You just ran the 3C command.";
+  ST.Details="You just ran the 3C command on the Project";
   Reply(std::move(ST));
-  _3CInter.parseASTs();
-  _3CInter.addVariables();
-  _3CInter.buildInitialConstraints();
-  _3CInter.solveConstraints();
-  _3CInter.writeAllConvertedFilesToDisk();
-  elog("Done converting successfully");
+  Server->execute3CCommand(_3CInter);
+  elog("Done converting successfully now in "
+       "LSP Server part of clangd");
 
 }
 #endif
