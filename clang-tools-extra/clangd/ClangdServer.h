@@ -38,6 +38,9 @@
 #include <string>
 #include <type_traits>
 #include <utility>
+#ifdef LSP3C
+#include <clang/3C/3C.h>
+#endif
 
 namespace clang {
 namespace clangd {
@@ -348,6 +351,9 @@ public:
   // Returns false if the timeout expires.
   LLVM_NODISCARD bool
   blockUntilIdleForTest(llvm::Optional<double> TimeoutSeconds = 10);
+#ifdef LSP3C
+  void execute3CCommand(_3CInterface &);
+#endif
 
   /// Builds a nested representation of memory used by components.
   void profile(MemoryTree &MT) const;
