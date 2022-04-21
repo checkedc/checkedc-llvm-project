@@ -926,20 +926,27 @@ clangd accepts flags on the commandline, and in the CLANGD_FLAGS environment var
   CcOptions.AllocatorFunctions = {};
 
   std::string ErrorMsg;
-
-  std::unique_ptr<tooling::CompilationDatabase> CompDB(
-      tooling::CompilationDatabase::autoDetectFromDirectory(CompileCommandsDir,
-                                                         ErrorMsg)
-  );
-  tooling::CompilationDatabase &_CompDB = *CompDB;
-  std::unique_ptr<_3CInterface> _3CInterfacePtr(
-      _3CInterface::create(CcOptions, CompDB->getAllFiles(),
-                           &(_CompDB)));
-  if (!_3CInterfacePtr) {
-    // _3CInterface::create has already printed an error message. Just exit.
-    return 1;
+  // This is a weird hack to go over the condition of not finding a comp DB
+  // todo Cleanup this code segment below
+  std::string FileBuf = getClangRepositoryPath();
+  if (!CompileCommandsDir.empty()){
+    FileBuf = CompileCommandsDir;
   }
+  std::unique_ptr<tooling::CompilationDatabase> CompDB(
+        tooling::CompilationDatabase::autoDetectFromDirectory(FileBuf,
+                                                              ErrorMsg)
+    );
+    tooling::CompilationDatabase &_CompDB = *CompDB;
+    std::unique_ptr<_3CInterface> _3CInterfacePtr(
+        _3CInterface::create(CcOptions, CompDB->getAllFiles(),
+                             &(_CompDB)));
+    if (!_3CInterfacePtr) {
+      // _3CInterface::create has already printed an error message. Just exit.
+      return 1;
+    }
+
   _3CInterface &_3CInter = *_3CInterfacePtr;
+
 #endif
   ClangdLSPServer LSPServer(*TransportLayer, TFS,
 #ifdef LSP3C
