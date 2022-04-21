@@ -206,6 +206,39 @@ void ClangdServer::addDocument(PathRef File, llvm::StringRef Contents,
   if (NewFile && BackgroundIdx)
     BackgroundIdx->boostRelated(File);
 }
+#ifdef LSP3C
+
+void ClangdServer::report3CDiagsForAllFiles(ConstraintsInfo &CcInfo, Callbacks *ConvCB) {
+  for (auto &SrcFileDiags : DiagInfofor3C.GetAllFilesDiagnostics()) {
+    ConvCB->_3CisDone(SrcFileDiags.first);
+  }
+}
+
+void ClangdServer::clear3CDiagsForAllFiles(ConstraintsInfo &CcInfo,
+                                           Callbacks *ConvCB) {
+  for (auto &SrcFileDiags : DiagInfofor3C.GetAllFilesDiagnostics()) {
+    // Clear diags for all files.
+    ConvCB->_3CisDone(SrcFileDiags.first, true);
+  }
+}
+void ClangdServer::execute3CCommand(_3CInterface &LSPInter,Callbacks *TCCB) {
+  DiagInfofor3C.ClearAllDiags();
+  TCCB->sendMessage("Running 3C");
+  LSPInter.parseASTs();
+  LSPInter.addVariables();
+  LSPInter.buildInitialConstraints();
+  LSPInter.solveConstraints();
+  LSPInter.writeAllConvertedFilesToDisk();
+  TCCB->sendMessage("Run completed ");
+  auto &E = LSPInter.getWildPtrsInfo();
+  log("3C: Got WildPointer Info \n");
+  DiagInfofor3C.PopulateDiagsFromConstraintsInfo(E);
+  log("3C: Populated Diags from Disjoint Sets.\n");
+  report3CDiagsForAllFiles(E, TCCB);
+  log("3C: Updated the diag information.\n");
+}
+#endif
+
 
 std::function<Context(PathRef)>
 ClangdServer::createConfiguredContextProvider(const config::Provider *Provider,
@@ -283,16 +316,7 @@ ClangdServer::createConfiguredContextProvider(const config::Provider *Provider,
     return (*I)(Path);
   };
 }
-#ifdef LSP3C
-void ClangdServer::execute3CCommand(_3CInterface &LSPInter) {
-    LSPInter.parseASTs();
-    LSPInter.addVariables();
-    LSPInter.buildInitialConstraints();
-    LSPInter.solveConstraints();
-    LSPInter.writeAllConvertedFilesToDisk();
-    elog("exiting the ClangdServer after this");
-}
-#endif
+
 void ClangdServer::removeDocument(PathRef File) { WorkScheduler.remove(File); }
 
 void ClangdServer::codeComplete(PathRef File, Position Pos,

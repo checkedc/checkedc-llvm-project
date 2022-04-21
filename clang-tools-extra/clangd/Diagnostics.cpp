@@ -423,6 +423,7 @@ void toLSPDiags(
   }
 
   Main.code = D.Name;
+
   switch (D.Source) {
   case Diag::Clang:
     Main.source = "clang";
@@ -433,6 +434,11 @@ void toLSPDiags(
   case Diag::ClangdConfig:
     Main.source = "clangd-config";
     break;
+#ifdef LSP3C
+  case Diag::Main3C:
+      Main.source = "3C_RealWild";
+      break;
+#endif
   case Diag::Unknown:
     break;
   }

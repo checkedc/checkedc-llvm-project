@@ -85,11 +85,18 @@ public:
 
   /// Profiles resource-usage.
   void profile(MemoryTree &MT) const;
-
+#ifdef LSP3C
+  void _3CisDone(std::string FileName, bool ClearDiags = false) override;
+  void sendMessage(std::string Msg) override;
+#endif
 private:
   // Implement ClangdServer::Callbacks.
   void onDiagnosticsReady(PathRef File, llvm::StringRef Version,
                           std::vector<Diag> Diagnostics) override;
+#ifdef LSP3C
+  void onDiagnosticsReady(PathRef File,
+                          std::vector<Diag> Diagnostics) ;
+#endif
   void onFileUpdated(PathRef File, const TUStatus &Status) override;
   void
   onHighlightingsReady(PathRef File, llvm::StringRef Version,

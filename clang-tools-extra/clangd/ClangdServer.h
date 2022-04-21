@@ -40,6 +40,7 @@
 #include <utility>
 #ifdef LSP3C
 #include <clang/3C/3C.h>
+#include "3CDiagnostics.h"
 #endif
 
 namespace clang {
@@ -82,6 +83,13 @@ public:
     /// Not called concurrently.
     virtual void
     onBackgroundIndexProgress(const BackgroundQueue::Stats &Stats) {}
+#ifdef LSP3C
+    virtual void
+    _3CisDone(std::string FileName,
+              bool ClearDiags = false) = 0;
+    virtual void
+    sendMessage(std::string Msg) = 0;
+#endif
   };
   /// Creates a context provider that loads and installs config.
   /// Errors in loading config are reported as diagnostics via Callbacks.
@@ -352,7 +360,10 @@ public:
   LLVM_NODISCARD bool
   blockUntilIdleForTest(llvm::Optional<double> TimeoutSeconds = 10);
 #ifdef LSP3C
-  void execute3CCommand(_3CInterface &);
+  //These are 3C specific commands on ClangdServer
+
+  void execute3CCommand(_3CInterface &, Callbacks *TCCB);
+  _3CDiagnostics DiagInfofor3C;
 #endif
 
   /// Builds a nested representation of memory used by components.
@@ -365,7 +376,10 @@ private:
 
   const GlobalCompilationDatabase &CDB;
   const ThreadsafeFS &TFS;
-
+#ifdef LSP3C
+  void report3CDiagsForAllFiles(ConstraintsInfo &CcInfo, Callbacks *ConvCB);
+  void clear3CDiagsForAllFiles(ConstraintsInfo &CcInfo, Callbacks *ConvCB);
+#endif
   Path ResourceDir;
   // The index used to look up symbols. This could be:
   //   - null (all index functionality is optional)
