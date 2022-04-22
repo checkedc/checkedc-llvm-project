@@ -418,7 +418,9 @@ void toLSPDiags(
     Res.range = D.Range;
     Res.severity = getSeverity(D.Severity);
     return Res;
+
   };
+  Main = FillBasicFields(D);
 #else
   if (D.InsideMainFile) {
     Main.range = D.Range;
