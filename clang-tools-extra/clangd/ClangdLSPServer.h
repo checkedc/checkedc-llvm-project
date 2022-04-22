@@ -41,7 +41,11 @@ class SymbolIndex;
 /// MessageHandler binds the implemented LSP methods (e.g. onInitialize) to
 /// corresponding JSON-RPC methods ("initialize").
 /// The server also supports $/cancelRequest (MessageHandler provides this).
+#ifdef LSP3C
+class ClangdLSPServer : private ClangdServer::Callbacks, public ClangdServer::_3CLSPCallBack {
+#else
 class ClangdLSPServer : private ClangdServer::Callbacks {
+#endif
 public:
   struct Options : ClangdServer::Options {
     /// Supplies configuration (overrides ClangdServer::ContextProvider).
@@ -93,10 +97,6 @@ private:
   // Implement ClangdServer::Callbacks.
   void onDiagnosticsReady(PathRef File, llvm::StringRef Version,
                           std::vector<Diag> Diagnostics) override;
-#ifdef LSP3C
-  void onDiagnosticsReady(PathRef File,
-                          std::vector<Diag> Diagnostics) ;
-#endif
   void onFileUpdated(PathRef File, const TUStatus &Status) override;
   void
   onHighlightingsReady(PathRef File, llvm::StringRef Version,

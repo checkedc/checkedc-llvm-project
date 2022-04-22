@@ -83,14 +83,20 @@ public:
     /// Not called concurrently.
     virtual void
     onBackgroundIndexProgress(const BackgroundQueue::Stats &Stats) {}
+
+  };
 #ifdef LSP3C
+  class _3CLSPCallBack {
+  public:
+    virtual ~_3CLSPCallBack() = default;
     virtual void
     _3CisDone(std::string FileName,
               bool ClearDiags = false) = 0;
     virtual void
     sendMessage(std::string Msg) = 0;
-#endif
   };
+
+#endif
   /// Creates a context provider that loads and installs config.
   /// Errors in loading config are reported as diagnostics via Callbacks.
   /// (This is typically used as ClangdServer::Options::ContextProvider).
@@ -362,7 +368,7 @@ public:
 #ifdef LSP3C
   //These are 3C specific commands on ClangdServer
 
-  void execute3CCommand(_3CInterface &, Callbacks *TCCB);
+  void execute3CCommand(_3CInterface &, _3CLSPCallBack *ConvCB);
   _3CDiagnostics DiagInfofor3C;
 #endif
 
@@ -377,8 +383,8 @@ private:
   const GlobalCompilationDatabase &CDB;
   const ThreadsafeFS &TFS;
 #ifdef LSP3C
-  void report3CDiagsForAllFiles(ConstraintsInfo &CcInfo, Callbacks *ConvCB);
-  void clear3CDiagsForAllFiles(ConstraintsInfo &CcInfo, Callbacks *ConvCB);
+  void report3CDiagsForAllFiles(ConstraintsInfo &CcInfo, _3CLSPCallBack *ConvCB);
+  void clear3CDiagsForAllFiles(ConstraintsInfo &CcInfo, _3CLSPCallBack *ConvCB);
 #endif
   Path ResourceDir;
   // The index used to look up symbols. This could be:
