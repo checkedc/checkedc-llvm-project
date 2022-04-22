@@ -8,6 +8,7 @@
 
 #ifdef LSP3C
 #include "3CDiagnostics.h"
+#include "support/Logger.h"
 #define DEF_PTR_SIZE 4
 
 namespace clang {
@@ -55,9 +56,8 @@ bool _3CDiagnostics::PopulateDiagsFromConstraintsInfo(ConstraintsInfo &Line) {
                                   PsInfo.getColENo());
       NewDiag.Source = Diag::Main3C;
       NewDiag.Severity = DiagnosticsEngine::Level::Error;
-      NewDiag.code = std::to_string(WReason.first);
       NewDiag.Message =
-          "Pointer is wild because of:" + WReason.second.getReason();
+          "Pointer is wild because of :" + WReason.second.getReason();
 
       // Create notes for the information about root cause.
       PersistentSourceLoc SL = WReason.second.getLocation();
@@ -70,6 +70,8 @@ bool _3CDiagnostics::PopulateDiagsFromConstraintsInfo(ConstraintsInfo &Line) {
         NewDiag.Notes.push_back(DiagNote);
       }
       AllFileDiagnostics[FilePath].push_back(NewDiag);
+      log(AllFileDiagnostics[FilePath].data()->Message.data());
+
     }
   }
   return true;

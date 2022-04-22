@@ -208,20 +208,20 @@ void ClangdServer::addDocument(PathRef File, llvm::StringRef Contents,
 }
 #ifdef LSP3C
 
-void ClangdServer::report3CDiagsForAllFiles(ConstraintsInfo &CcInfo, Callbacks *ConvCB) {
+void ClangdServer::report3CDiagsForAllFiles(ConstraintsInfo &CcInfo, _3CLSPCallBack *ConvCB) {
   for (auto &SrcFileDiags : DiagInfofor3C.GetAllFilesDiagnostics()) {
     ConvCB->_3CisDone(SrcFileDiags.first);
   }
 }
 
 void ClangdServer::clear3CDiagsForAllFiles(ConstraintsInfo &CcInfo,
-                                           Callbacks *ConvCB) {
+                                           _3CLSPCallBack *ConvCB) {
   for (auto &SrcFileDiags : DiagInfofor3C.GetAllFilesDiagnostics()) {
     // Clear diags for all files.
     ConvCB->_3CisDone(SrcFileDiags.first, true);
   }
 }
-void ClangdServer::execute3CCommand(_3CInterface &LSPInter,Callbacks *TCCB) {
+void ClangdServer::execute3CCommand(_3CInterface &LSPInter,_3CLSPCallBack *TCCB) {
   DiagInfofor3C.ClearAllDiags();
   TCCB->sendMessage("Running 3C");
   LSPInter.parseASTs();

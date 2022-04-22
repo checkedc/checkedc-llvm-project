@@ -691,6 +691,7 @@ void ClangdLSPServer::onSync(Callback<std::nullptr_t> Reply) {
 
 void ClangdLSPServer::onDocumentDidOpen(
     const DidOpenTextDocumentParams &Params) {
+#ifndef LSP3C
   PathRef File = Params.textDocument.uri.file();
 
   const std::string &Contents = Params.textDocument.text;
@@ -698,6 +699,7 @@ void ClangdLSPServer::onDocumentDidOpen(
   auto Version = DraftMgr.addDraft(File, Params.textDocument.version, Contents);
   Server->addDocument(File, Contents, encodeVersion(Version),
                       WantDiagnostics::Yes);
+#endif
 }
 
 void ClangdLSPServer::onDocumentDidChange(
@@ -742,7 +744,7 @@ void ClangdLSPServer::_3CisDone(std::string FileName,
           allDiags[FileName].end());
     }
   }
-  this->onDiagnosticsReady(FileName,Diagnostics);
+  this->onDiagnosticsReady(FileName," ",Diagnostics);
 }
 
 void ClangdLSPServer::sendMessage(std::string MsgStr) {
@@ -1518,9 +1520,6 @@ void ClangdLSPServer::onRun3c(Callback<llvm::Optional<_3CStats>> Reply) {
   ST.Details="You just ran the 3C command on the Project";
   Reply(std::move(ST));
   Server->execute3CCommand(_3CInter, this);
-  if (!Opts.CompileCommandsDir->empty()){
-    log("There is DB");
-  }
     elog("Done converting successfully now in "
          "LSP Server part of clangd");
 
@@ -1687,7 +1686,19 @@ void ClangdLSPServer::onHighlightingsReady(
 
 void ClangdLSPServer::onDiagnosticsReady(PathRef File, llvm::StringRef Version,
                                          std::vector<Diag> Diagnostics) {
+#ifdef LSP3C
+  PublishDiagnosticsParams Notification;
+  Notification.uri = URIForFile::canonicalize(File, /*TUPath=*/File);
 
+  for (auto &Diag : Diagnostics) {
+    toLSPDiags(Diag, Notification.uri, DiagOpts,
+               [&](clangd::Diagnostic Diag, llvm::ArrayRef<Fix> Fixes) {
+                 Notification.diagnostics.push_back(std::move(Diag));
+               });
+  }
+
+  publishDiagnostics(Notification);
+#else
   PublishDiagnosticsParams Notification;
   Notification.version = decodeVersion(Version);
   Notification.uri = URIForFile::canonicalize(File, /*TUPath=*/File);
@@ -1710,25 +1721,8 @@ void ClangdLSPServer::onDiagnosticsReady(PathRef File, llvm::StringRef Version,
 
   // Send a notification to the LSP client.
   publishDiagnostics(Notification);
-
-}
-#ifdef LSP3C
-void ClangdLSPServer::onDiagnosticsReady(PathRef File, std::vector<Diag> Diagnostics) {
-  PublishDiagnosticsParams Notification;
-  Notification.uri = URIForFile::canonicalize(File, /*TUPath=*/File);
-  std::vector<Diagnostic> LSPDiagnostics;
-
-  for (auto &Diag : Diagnostics) {
-    toLSPDiags(Diag, Notification.uri, DiagOpts,
-               [&](clangd::Diagnostic Diag, llvm::ArrayRef<Fix> Fixes) {
-                 Notification.diagnostics.push_back(std::move(Diag));
-               });
-  }
-
-  publishDiagnostics(Notification);
-
-}
 #endif
+}
 
 void ClangdLSPServer::onBackgroundIndexProgress(
     const BackgroundQueue::Stats &Stats) {
