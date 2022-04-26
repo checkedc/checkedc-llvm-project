@@ -691,7 +691,10 @@ void ClangdLSPServer::onSync(Callback<std::nullptr_t> Reply) {
 
 void ClangdLSPServer::onDocumentDidOpen(
     const DidOpenTextDocumentParams &Params) {
-#ifndef LSP3C
+#ifdef LSP3C
+  PathRef File = Params.textDocument.uri.file();
+  Server->_3COpenDocument(File.str(),this);
+#else
   PathRef File = Params.textDocument.uri.file();
 
   const std::string &Contents = Params.textDocument.text;
@@ -736,13 +739,10 @@ void ClangdLSPServer::_3CisDone(std::string FileName,
   if (!ClearDiags) {
     std::lock_guard<std::mutex> lock(Server->DiagInfofor3C.DiagMutex);
     auto &allDiags = Server->DiagInfofor3C.GetAllFilesDiagnostics();
-    if (allDiags.find(FileName) !=
-        allDiags.end()) {
-      Diagnostics.insert(
-          Diagnostics.begin(),
-          allDiags[FileName].begin(),
-          allDiags[FileName].end());
-    }
+    auto &FileDiag = Server->DiagInfofor3C.Get3CDiagsForThisFile(FileName);
+    Diagnostics.insert(Diagnostics.begin(),
+                       FileDiag.begin(),
+                       FileDiag.end());
   }
   this->onDiagnosticsReady(FileName," ",Diagnostics);
 }
@@ -911,9 +911,15 @@ void ClangdLSPServer::onRename(const RenameParams &Params,
 
 void ClangdLSPServer::onDocumentDidClose(
     const DidCloseTextDocumentParams &Params) {
+#ifdef LSP3C
+  PathRef File = Params.textDocument.uri.file();
+  Server->_3CCloseDocument(File.str(),this);
+  /*sendMessage("Finished writing the file: "+File.str());*/
+#else
   PathRef File = Params.textDocument.uri.file();
   DraftMgr.removeDraft(File);
   Server->removeDocument(File);
+#endif
 
   {
     std::lock_guard<std::mutex> Lock(FixItsMutex);

@@ -213,6 +213,10 @@ void ClangdServer::report3CDiagsForAllFiles(ConstraintsInfo &CcInfo, _3CLSPCallB
     ConvCB->_3CisDone(SrcFileDiags.first);
   }
 }
+void ClangdServer::report3CDiagsforFile(std::string FileName, _3CLSPCallBack *ConvCB) {
+
+  ConvCB->_3CisDone(FileName);
+}
 
 void ClangdServer::clear3CDiagsForAllFiles(ConstraintsInfo &CcInfo,
                                            _3CLSPCallBack *ConvCB) {
@@ -222,20 +226,35 @@ void ClangdServer::clear3CDiagsForAllFiles(ConstraintsInfo &CcInfo,
   }
 }
 void ClangdServer::execute3CCommand(_3CInterface &LSPInter,_3CLSPCallBack *TCCB) {
-  DiagInfofor3C.ClearAllDiags();
-  TCCB->sendMessage("Running 3C");
-  LSPInter.parseASTs();
-  LSPInter.addVariables();
-  LSPInter.buildInitialConstraints();
-  LSPInter.solveConstraints();
-  LSPInter.writeAllConvertedFilesToDisk();
-  TCCB->sendMessage("Run completed ");
-  auto &E = LSPInter.getWildPtrsInfo();
-  log("3C: Got WildPointer Info \n");
-  DiagInfofor3C.PopulateDiagsFromConstraintsInfo(E);
-  log("3C: Populated Diags from Disjoint Sets.\n");
-  report3CDiagsForAllFiles(E, TCCB);
-  log("3C: Updated the diag information.\n");
+  auto Task = [this,&LSPInter,TCCB](){
+    DiagInfofor3C.ClearAllDiags();
+    TCCB->sendMessage("Running 3C");
+    LSPInter.parseASTs();
+    LSPInter.addVariables();
+    LSPInter.buildInitialConstraints();
+    LSPInter.solveConstraints();
+    LSPInter.writeAllConvertedFilesToDisk();
+    auto &E = LSPInter.getWildPtrsInfo();
+    DiagInfofor3C.PopulateDiagsFromConstraintsInfo(E);
+    TCCB->sendMessage("Run completed ");
+  };
+  WorkScheduler.run("3C: Running the initial run","",Task);
+}
+void ClangdServer::_3CCloseDocument(std::string FileName,_3CLSPCallBack *ConvCB) {
+  auto Task = [this,FileName,ConvCB](){
+    log("3C: close file: {0}\n",FileName);
+    DiagInfofor3C.ClearAllDiags();
+    ConvCB->_3CisDone(FileName,true);
+
+  };
+  WorkScheduler.run("3C: Wrote back file.","",Task);
+}
+void ClangdServer::_3COpenDocument(std::string FileName,_3CLSPCallBack *ConvCB){
+  auto Task = [this,FileName,ConvCB](){
+    DiagInfofor3C.ClearAllDiags();
+    report3CDiagsforFile(FileName,ConvCB);
+  };
+  WorkScheduler.run("3C: Opened a document ","",Task);
 }
 #endif
 
