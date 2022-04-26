@@ -93,7 +93,8 @@ static cl::opt<std::string> OptOutputPostfix(
     "output-postfix",
     cl::desc("String to insert into the names of updated files just before the "
              "extension (e.g., with -output-postfix=checked, foo.c -> "
-             "foo.checked.c)"),
+             "foo.checked.c.)"
+              "Pass null to overwrite the file with CheckedC annotations."),
     cl::init("-"), cl::cat(_3CCategory));
 
 static cl::opt<std::string> OptOutputDir(
