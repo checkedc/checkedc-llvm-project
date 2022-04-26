@@ -33,6 +33,9 @@ public:
   std::map<std::string, std::vector<Diag>> &GetAllFilesDiagnostics() {
     return AllFileDiagnostics;
   }
+  std::vector<Diag> &Get3CDiagsForThisFile(std::string FileName){
+    return AllFileDiagnostics[FileName];
+  }
 private:
   // Diagnostics of all files.
   std::map<std::string, std::vector<Diag>> AllFileDiagnostics;

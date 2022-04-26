@@ -370,6 +370,8 @@ public:
 
   void execute3CCommand(_3CInterface &, _3CLSPCallBack *ConvCB);
   _3CDiagnostics DiagInfofor3C;
+  void _3COpenDocument(std::string FileName,_3CLSPCallBack *ConvCB);
+  void _3CCloseDocument(std::string FileName,_3CLSPCallBack *ConvCB);
 #endif
 
   /// Builds a nested representation of memory used by components.
@@ -384,6 +386,7 @@ private:
   const ThreadsafeFS &TFS;
 #ifdef LSP3C
   void report3CDiagsForAllFiles(ConstraintsInfo &CcInfo, _3CLSPCallBack *ConvCB);
+  void report3CDiagsforFile(std::string FileName, _3CLSPCallBack *ConvCB);
   void clear3CDiagsForAllFiles(ConstraintsInfo &CcInfo, _3CLSPCallBack *ConvCB);
 #endif
   Path ResourceDir;
