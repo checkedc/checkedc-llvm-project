@@ -602,12 +602,12 @@ void ClangdLSPServer::onInitialize(const InitializeParams &Params,
                    {"change", (int)TextDocumentSyncKind::Incremental},
                    {"save", true},
                }},
-              {"codeActionProvider", std::move(CodeActionProvider)},
+              {"codeActionProvider", true},
               {"executeCommandProvider",
                llvm::json::Object{
                    {"commands",
-                    {ExecuteCommandParams::CLANGD_APPLY_FIX_COMMAND,
-                     ExecuteCommandParams::CLANGD_APPLY_TWEAK}},
+                    {ExecuteCommandParams::_3C_APPLY_FOR_ALL,
+                     ExecuteCommandParams::_3C_APPLY_ONLY_FOR_THIS}},
                }},
 
 
@@ -802,6 +802,7 @@ void ClangdLSPServer::onFileEvent(const DidChangeWatchedFilesParams &Params) {
 void ClangdLSPServer::onCommand(const ExecuteCommandParams &Params,
                                 Callback<llvm::json::Value> Reply) {
 #ifdef LSP3C
+  elog("Command run from LSPServer");
   if (Is3CCommand(Params)){
     Server->execute3CFix(_3CInter,Params,this);
     Reply("3c Background work going on");
@@ -1110,6 +1111,7 @@ void ClangdLSPServer::onCodeAction(const CodeActionParams &Params,
   URIForFile File = Params.textDocument.uri;
   std::vector<Command> CCommands;
   for(const Diagnostic &D: Params.context.diagnostics) {
+    log("This One");
     AsCCCommands(D,CCommands);
   }
   Reply(llvm::json::Array(CCommands));
