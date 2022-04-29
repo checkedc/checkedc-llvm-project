@@ -7,6 +7,9 @@
 //===-------------------------------------------------------------------===//
 
 #include "ClangdServer.h"
+#ifdef LSP3C
+#include "3CCommands.h"
+#endif
 #include "CodeComplete.h"
 #include "Config.h"
 #include "DumpAST.h"
@@ -233,26 +236,54 @@ void ClangdServer::execute3CCommand(_3CInterface &LSPInter,_3CLSPCallBack *TCCB)
     LSPInter.addVariables();
     LSPInter.buildInitialConstraints();
     LSPInter.solveConstraints();
-    LSPInter.writeAllConvertedFilesToDisk();
     auto &E = LSPInter.getWildPtrsInfo();
     DiagInfofor3C.PopulateDiagsFromConstraintsInfo(E);
+    report3CDiagsForAllFiles(E,TCCB);
     TCCB->sendMessage("Run completed ");
   };
   WorkScheduler.run("3C: Running the initial run","",Task);
 }
+void ClangdServer::execute3CFix(_3CInterface &LSPInter,ExecuteCommandParams Params, _3CLSPCallBack *ConvCB) {
+  auto Task = [this,&LSPInter,Params,ConvCB](){
+    std::string RplMsg;
+    auto &WildPtrsInfo = LSPInter.getWildPtrsInfo();
+    auto &PtrSourceMap = WildPtrsInfo.AtomSourceMap;
+    if (PtrSourceMap.find(Params._3CFix->ptrID) !=
+        PtrSourceMap.end()) {
+      std::string PtrFileName =
+          PtrSourceMap[Params._3CFix->ptrID].getFileName();
+      log("3C: File of the pointer {0}\n", PtrFileName);
+      clear3CDiagsForAllFiles(WildPtrsInfo, ConvCB);
+      ConvCB->sendMessage("3C modifying constraints.");
+      ExecuteCCCommand(Params, RplMsg, LSPInter);
+      this->DiagInfofor3C.ClearAllDiags();
+      ConvCB->sendMessage("3C Updating new issues "
+                            "after editing constraints.");
+      this->DiagInfofor3C.PopulateDiagsFromConstraintsInfo(WildPtrsInfo);
+      log("3C calling call-back\n");
+      // ConvCB->_3CResultsReady(ptrFileName);
+      ConvCB->sendMessage("3C Updated new issues.");
+      report3CDiagsForAllFiles(WildPtrsInfo, ConvCB);
+    } else {
+      ConvCB->sendMessage("3C constraint key already removed.");
+    }
+  };
+  WorkScheduler.run("3C: Applying on demand modifications","",Task);
+}
 void ClangdServer::_3CCloseDocument(std::string FileName,_3CLSPCallBack *ConvCB) {
   auto Task = [this,FileName,ConvCB](){
     log("3C: close file: {0}\n",FileName);
-    DiagInfofor3C.ClearAllDiags();
+/*
     ConvCB->_3CisDone(FileName,true);
+*/
 
   };
   WorkScheduler.run("3C: Wrote back file.","",Task);
 }
-void ClangdServer::_3COpenDocument(std::string FileName,_3CLSPCallBack *ConvCB){
-  auto Task = [this,FileName,ConvCB](){
-    DiagInfofor3C.ClearAllDiags();
-    report3CDiagsforFile(FileName,ConvCB);
+void ClangdServer::_3COpenDocument(_3CInterface &LSPInter,std::string FileName,_3CLSPCallBack *ConvCB){
+  auto Task = [this,&LSPInter,FileName,ConvCB](){
+    auto &E = LSPInter.getWildPtrsInfo();
+    report3CDiagsForAllFiles(E,ConvCB);
   };
   WorkScheduler.run("3C: Opened a document ","",Task);
 }

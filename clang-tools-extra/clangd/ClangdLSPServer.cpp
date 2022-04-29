@@ -20,6 +20,7 @@
 #include "URI.h"
 #ifdef LSP3C
 #include "clang/3C/3C.h"
+#include "3CCommands.h"
 #endif
 #include "refactor/Tweak.h"
 #include "support/Context.h"
@@ -590,7 +591,30 @@ void ClangdLSPServer::onInitialize(const InitializeParams &Params,
         {"codeActionKinds",
          {CodeAction::QUICKFIX_KIND, CodeAction::REFACTOR_KIND,
           CodeAction::INFO_KIND}}};
+#ifdef LSP3C
+  llvm::json::Object Result{
+      {{
+          "capabilities",
+          llvm::json::Object{
+            {"textDocumentSync",
+               llvm::json::Object{
+                   {"openClose", true},
+                   {"change", (int)TextDocumentSyncKind::Incremental},
+                   {"save", true},
+               }},
+              {"codeActionProvider", std::move(CodeActionProvider)},
+              {"executeCommandProvider",
+               llvm::json::Object{
+                   {"commands",
+                    {ExecuteCommandParams::CLANGD_APPLY_FIX_COMMAND,
+                     ExecuteCommandParams::CLANGD_APPLY_TWEAK}},
+               }},
 
+
+          }
+      }}
+  };
+#else
   llvm::json::Object Result{
       {{"serverInfo",
         llvm::json::Object{{"name", "clangd"},
@@ -669,6 +693,7 @@ void ClangdLSPServer::onInitialize(const InitializeParams &Params,
              llvm::json::Object{{"scopes", buildHighlightScopeLookupTable()}}});
   if (Opts.FoldingRanges)
     Result.getObject("capabilities")->insert({"foldingRangeProvider", true});
+#endif
   Reply(std::move(Result));
 }
 
@@ -693,7 +718,7 @@ void ClangdLSPServer::onDocumentDidOpen(
     const DidOpenTextDocumentParams &Params) {
 #ifdef LSP3C
   PathRef File = Params.textDocument.uri.file();
-  Server->_3COpenDocument(File.str(),this);
+  Server->_3COpenDocument(_3CInter,File.str(),this);
 #else
   PathRef File = Params.textDocument.uri.file();
 
@@ -741,8 +766,8 @@ void ClangdLSPServer::_3CisDone(std::string FileName,
     auto &allDiags = Server->DiagInfofor3C.GetAllFilesDiagnostics();
     auto &FileDiag = Server->DiagInfofor3C.Get3CDiagsForThisFile(FileName);
     Diagnostics.insert(Diagnostics.begin(),
-                       FileDiag.begin(),
-                       FileDiag.end());
+                       allDiags[FileName].begin(),
+                       allDiags[FileName].end());
   }
   this->onDiagnosticsReady(FileName," ",Diagnostics);
 }
@@ -776,6 +801,18 @@ void ClangdLSPServer::onFileEvent(const DidChangeWatchedFilesParams &Params) {
 
 void ClangdLSPServer::onCommand(const ExecuteCommandParams &Params,
                                 Callback<llvm::json::Value> Reply) {
+#ifdef LSP3C
+  if (Is3CCommand(Params)){
+    Server->execute3CFix(_3CInter,Params,this);
+    Reply("3c Background work going on");
+  }
+  else{
+    Reply(llvm::make_error<LSPError>(
+        llvm::formatv("Unsupported command \"{0}\".", Params.command).str(),
+        ErrorCode::InvalidParams));
+  }
+
+#else
   auto ApplyEdit = [this](WorkspaceEdit WE, std::string SuccessMessage,
                           decltype(Reply) Reply) {
     ApplyWorkspaceEditParams Edit;
@@ -855,6 +892,7 @@ void ClangdLSPServer::onCommand(const ExecuteCommandParams &Params,
         llvm::formatv("Unsupported command \"{0}\".", Params.command).str(),
         ErrorCode::InvalidParams));
   }
+#endif
 }
 
 void ClangdLSPServer::onWorkspaceSymbol(
@@ -1067,6 +1105,16 @@ static llvm::Optional<Command> asCommand(const CodeAction &Action) {
 
 void ClangdLSPServer::onCodeAction(const CodeActionParams &Params,
                                    Callback<llvm::json::Value> Reply) {
+
+#ifdef LSP3C
+  URIForFile File = Params.textDocument.uri;
+  std::vector<Command> CCommands;
+  for(const Diagnostic &D: Params.context.diagnostics) {
+    AsCCCommands(D,CCommands);
+  }
+  Reply(llvm::json::Array(CCommands));
+
+#else
   URIForFile File = Params.textDocument.uri;
   auto Code = DraftMgr.getDraft(File.file());
   if (!Code)
@@ -1135,6 +1183,7 @@ void ClangdLSPServer::onCodeAction(const CodeActionParams &Params,
         return Opts.TweakFilter(T) && KindAllowed(T.kind());
       },
       std::move(ConsumeActions));
+#endif
 }
 
 void ClangdLSPServer::onCompletion(const CompletionParams &Params,
