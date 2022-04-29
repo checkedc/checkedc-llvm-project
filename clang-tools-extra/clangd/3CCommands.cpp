@@ -19,7 +19,7 @@ namespace clangd {
 
 static bool GetPtrIDFromDiagMessage(const Diagnostic &DiagMsg,
                                     unsigned long &PtrId) {
-  if (DiagMsg.source.rfind(_3CSOURCE, 0) == 0) {
+  if (DiagMsg.source==_3CSOURCE) {
     PtrId = atoi(DiagMsg.code.c_str());
     return true;
   }
@@ -35,13 +35,13 @@ void AsCCCommands(const Diagnostic &D, std::vector<Command> &OutCommands) {
     AllPtrsCmd._3CFix = PtrFix;
     Command SinglePtrCmd = AllPtrsCmd;
 
-    AllPtrsCmd.command = ExecuteCommandParams::_3C_APPLY_FOR_ALL.str();
+    AllPtrsCmd.command = std::string(Command::_3C_APPLY_FOR_ALL);
     AllPtrsCmd.title = "Make this pointer non-WILD and apply the "
                        "same observation to all the pointers.";
 
     OutCommands.push_back(AllPtrsCmd);
 
-    SinglePtrCmd.command = Command::_3C_APPLY_ONLY_FOR_THIS.str();
+    SinglePtrCmd.command = std::string(Command::_3C_APPLY_ONLY_FOR_THIS);
     SinglePtrCmd.title = "Make ONLY this pointer non-WILD.";
 
     OutCommands.push_back(SinglePtrCmd);
@@ -49,22 +49,23 @@ void AsCCCommands(const Diagnostic &D, std::vector<Command> &OutCommands) {
 }
 
 bool Is3CCommand(const ExecuteCommandParams &Params) {
-  return (Params.command.rfind(Command::_3C_APPLY_ONLY_FOR_THIS.str(), 0) == 0) ||
-         (Params.command.rfind(Command::_3C_APPLY_FOR_ALL.str(), 0) == 0);
+  return (Params.command==Command::_3C_APPLY_ONLY_FOR_THIS||
+         Params.command==Command::_3C_APPLY_FOR_ALL);
 }
 
 bool ExecuteCCCommand(const ExecuteCommandParams &Params,
                       std::string &ReplyMessage,
                       _3CInterface &CcInterface) {
   ReplyMessage = "Checked C Pointer Modified.";
-  if (Params.command.rfind(Command::_3C_APPLY_ONLY_FOR_THIS.str(), 0) == 0) {
+  if (Params.command==Command::_3C_APPLY_ONLY_FOR_THIS) {
     int PtrId = Params._3CFix->ptrID;
-    /*CcInterface.makeSinglePtrNonWild(PtrId);*/
+    CcInterface.makeSinglePtrNonWild(PtrId);
     log("Single Pointer Wild.");
     return true;
   }
-  if (Params.command.rfind(Command::_3C_APPLY_FOR_ALL.str(), 0) == 0) {
+  if (Params.command==Command::_3C_APPLY_FOR_ALL){
     int PtrId = Params._3CFix->ptrID;
+    /*CcInterface.invalidateWildReasonGlobally(PtrId);*/
     log("Global Pointer Wild.");
     return true;
   }

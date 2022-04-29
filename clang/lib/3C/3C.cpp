@@ -741,3 +741,41 @@ void _3CInterface::invalidateAllConstraintsWithReason(
     delete (ToDelCons);
   }
 }
+bool _3CInterface::makeSinglePtrNonWild(ConstraintKey TargetPtr) {
+  std::lock_guard<std::mutex> Lock(InterfaceMutex);
+  CVars RemovePtrs;
+  RemovePtrs.clear();
+
+  auto &PtrDisjointSet = GlobalProgramInfo.getInterimConstraintState();
+  auto &CS = GlobalProgramInfo.getConstraints();
+
+  CVars OldWildPtrs = PtrDisjointSet.AllWildAtoms;
+
+  //Delete the constraint that makes the target non-wild
+
+  VarAtom *VA = CS.getOrCreateVar(TargetPtr,"q",VarAtom::V_Other);
+  Geq newE(VA, CS.getWild(),ReasonLoc());
+  Constraint *originalConstraint = *CS.getConstraints().find(&newE);
+  CS.removeConstraint(originalConstraint);
+  VA->getAllConstraints().erase(originalConstraint);
+  delete(originalConstraint);
+  // Reset the constraint system.
+  CS.resetEnvironment();
+
+  // Solve the constraints.
+  //assert (CS == GlobalProgramInfo.getConstraints());
+  runSolver(GlobalProgramInfo, FilePaths);
+
+  // Compute new disjoint set.
+  GlobalProgramInfo.computeInterimConstraintState(FilePaths);
+
+  // Get new WILD pointers.
+  CVars &NewWildPtrs = PtrDisjointSet.AllWildAtoms;
+
+  // Get the number of pointers that have now converted to non-WILD.
+  std::set_difference(OldWildPtrs.begin(), OldWildPtrs.end(),
+                      NewWildPtrs.begin(), NewWildPtrs.end(),
+                      std::inserter(RemovePtrs, RemovePtrs.begin()));
+
+  return !RemovePtrs.empty();
+}
