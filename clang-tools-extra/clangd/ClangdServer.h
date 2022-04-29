@@ -369,8 +369,11 @@ public:
   //These are 3C specific commands on ClangdServer
 
   void execute3CCommand(_3CInterface &, _3CLSPCallBack *ConvCB);
+  void execute3CFix(_3CInterface &,ExecuteCommandParams Params,
+                    _3CLSPCallBack *ConvCB);
   _3CDiagnostics DiagInfofor3C;
-  void _3COpenDocument(std::string FileName,_3CLSPCallBack *ConvCB);
+  void _3COpenDocument(_3CInterface &,std::string FileName,
+                       _3CLSPCallBack *ConvCB);
   void _3CCloseDocument(std::string FileName,_3CLSPCallBack *ConvCB);
 #endif
 

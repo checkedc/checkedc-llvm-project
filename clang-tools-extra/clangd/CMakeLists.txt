@@ -49,6 +49,7 @@ add_clang_library(clangDaemon
   ASTSignals.cpp
   ClangdLSPServer.cpp
   ClangdServer.cpp
+  3CCommands.cpp
   3CDiagnostics.cpp
   CodeComplete.cpp
   CodeCompletionStrings.cpp
@@ -164,6 +165,7 @@ add_clang_library(3cClangDaemon
         ASTSignals.cpp
         ClangdLSPServer.cpp
         ClangdServer.cpp
+        3CCommands.cpp
         3CDiagnostics.cpp
         CodeComplete.cpp
         CodeCompletionStrings.cpp
