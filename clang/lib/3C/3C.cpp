@@ -758,7 +758,9 @@ bool _3CInterface::makeSinglePtrNonWild(ConstraintKey TargetPtr) {
   Constraint *originalConstraint = *CS.getConstraints().find(&newE);
   CS.removeConstraint(originalConstraint);
   VA->getAllConstraints().erase(originalConstraint);
+
   delete(originalConstraint);
+
   // Reset the constraint system.
   CS.resetEnvironment();
 
@@ -779,3 +781,40 @@ bool _3CInterface::makeSinglePtrNonWild(ConstraintKey TargetPtr) {
 
   return !RemovePtrs.empty();
 }
+bool _3CInterface::invalidateWildReasonGlobally(ConstraintKey PtrKey) {
+  std::lock_guard<std::mutex> Lock(InterfaceMutex);
+
+  CVars RemovePtrs;
+  RemovePtrs.clear();
+
+  auto &PtrDisjointSet = GlobalProgramInfo.getInterimConstraintState();
+  auto &CS = GlobalProgramInfo.getConstraints();
+
+  CVars OldWildPtrs = PtrDisjointSet.AllWildAtoms;
+
+  // Delete ALL the constraints that have the same given reason.
+  VarAtom *VA = CS.getOrCreateVar(PtrKey, "q", VarAtom::V_Other);
+  Geq NewE(VA, CS.getWild(),ReasonLoc());
+  Constraint *OriginalConstraint = *CS.getConstraints().find(&NewE);
+  invalidateAllConstraintsWithReason(OriginalConstraint);
+
+  // Reset constraint solver.
+  CS.resetEnvironment();
+
+  // Solve the constraints.
+  runSolver(GlobalProgramInfo, FilePaths);
+
+  // Recompute the WILD pointer disjoint sets.
+  GlobalProgramInfo.computeInterimConstraintState(FilePaths);
+
+  // Computed the number of removed pointers.
+  CVars &NewWildPtrs = PtrDisjointSet.AllWildAtoms;
+
+  std::set_difference(OldWildPtrs.begin(), OldWildPtrs.end(),
+                      NewWildPtrs.begin(), NewWildPtrs.end(),
+                      std::inserter(RemovePtrs, RemovePtrs.begin()));
+
+  return !RemovePtrs.empty();
+}
+
+

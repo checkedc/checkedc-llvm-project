@@ -465,5 +465,10 @@ int main(int argc, const char **argv) {
 
   // Even if all passes succeeded, we could still have a diagnostic verification
   // failure.
+  auto Something = _3CInterface.getWildPtrsInfo();
+  auto ID = Something.RootWildAtomsWithReason.begin()->first;
+  _3CInterface.makeSinglePtrNonWild(ID);
+  auto Again = _3CInterface.getWildPtrsInfo().RootWildAtomsWithReason;
+
   return _3CInterface.determineExitCode();
 }

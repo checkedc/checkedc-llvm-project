@@ -16,6 +16,7 @@ namespace clangd {
 
 void _3CDiagnostics::ClearAllDiags() {
   std::lock_guard<std::mutex> Lock(DiagMutex);
+  AllFileDiagnostics.clear();
 }
 
 static bool IsValidSourceFile(ConstraintsInfo &CCRes, std::string &FilePath) {
@@ -26,6 +27,7 @@ bool _3CDiagnostics::PopulateDiagsFromConstraintsInfo(ConstraintsInfo &Line) {
   std::lock_guard<std::mutex> Lock(DiagMutex);
   std::set<ConstraintKey> ProcessedCKeys;
   ProcessedCKeys.clear();
+  log("Populating Part 1");
   auto GetLocRange = [](uint32_t Line, uint32_t ColNoS,
                         uint32_t ColNoE) -> Range {
     Range nRange;
@@ -42,6 +44,7 @@ bool _3CDiagnostics::PopulateDiagsFromConstraintsInfo(ConstraintsInfo &Line) {
   };
 
   for (auto &WReason : Line.RootWildAtomsWithReason) {
+    log("Populating Part 2");
     if (Line.AtomSourceMap.find(WReason.first) != Line.AtomSourceMap.end()) {
       auto PsInfo = Line.AtomSourceMap[WReason.first];
       std::string FilePath = PsInfo.getFileName();
@@ -56,6 +59,7 @@ bool _3CDiagnostics::PopulateDiagsFromConstraintsInfo(ConstraintsInfo &Line) {
                                   PsInfo.getColENo());
       NewDiag.Source = Diag::Main3C;
       NewDiag.Severity = DiagnosticsEngine::Level::Error;
+      NewDiag.code = std::to_string(WReason.first);
       NewDiag.Message =
           "Pointer is wild because of :" + WReason.second.getReason();
 
@@ -74,6 +78,7 @@ bool _3CDiagnostics::PopulateDiagsFromConstraintsInfo(ConstraintsInfo &Line) {
 
     }
   }
+
   return true;
 }
 }
