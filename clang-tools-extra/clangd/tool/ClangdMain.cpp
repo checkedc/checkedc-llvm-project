@@ -920,9 +920,12 @@ clangd accepts flags on the commandline, and in the CLANGD_FLAGS environment var
 #ifdef LSP3C
   struct _3COptions CcOptions;
   CcOptions.AllTypes=true;
-  CcOptions.AddCheckedRegions=true;
+  CcOptions.AddCheckedRegions=false;
+  CcOptions.HandleVARARGS=true;
+  CcOptions.EnableCCTypeChecker=true;
+  CcOptions.InferTypesForUndefs=true;
   CcOptions.DumpIntermediate=false;
-  CcOptions.OutputPostfix="checked";
+  CcOptions.OutputPostfix="null";
   CcOptions.AllocatorFunctions = {};
 
   std::string ErrorMsg;

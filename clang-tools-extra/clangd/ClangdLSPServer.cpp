@@ -718,7 +718,7 @@ void ClangdLSPServer::onDocumentDidOpen(
     const DidOpenTextDocumentParams &Params) {
 #ifdef LSP3C
   PathRef File = Params.textDocument.uri.file();
-  Server->_3COpenDocument(_3CInter,File.str(),this);
+  Server->_3COpenDocument(File.str(),this);
 #else
   PathRef File = Params.textDocument.uri.file();
 
@@ -760,6 +760,7 @@ void ClangdLSPServer::_3CisDone(std::string FileName,
                                       bool ClearDiags) {
   // Get the diagnostics and update the client.
   std::vector<Diag> Diagnostics;
+  log("In  3c is Done: Part 1");
   Diagnostics.clear();
   if (!ClearDiags) {
     std::lock_guard<std::mutex> lock(Server->DiagInfofor3C.DiagMutex);
@@ -958,7 +959,7 @@ void ClangdLSPServer::onDocumentDidClose(
   PathRef File = Params.textDocument.uri.file();
   DraftMgr.removeDraft(File);
   Server->removeDocument(File);
-#endif
+
 
   {
     std::lock_guard<std::mutex> Lock(FixItsMutex);
@@ -980,6 +981,7 @@ void ClangdLSPServer::onDocumentDidClose(
   PublishDiagnosticsParams Notification;
   Notification.uri = URIForFile::canonicalize(File, /*TUPath=*/File);
   publishDiagnostics(Notification);
+#endif
 }
 
 void ClangdLSPServer::onDocumentOnTypeFormatting(
@@ -1577,6 +1579,9 @@ void ClangdLSPServer::onRun3c(Callback<llvm::Optional<_3CStats>> Reply) {
   ST.Details="You just ran the 3C command on the Project";
   Reply(std::move(ST));
   Server->execute3CCommand(_3CInter, this);
+/*
+  Server->secondrun3C(_3CInter,this);
+*/
     elog("Done converting successfully now in "
          "LSP Server part of clangd");
 

@@ -65,7 +65,7 @@ bool ExecuteCCCommand(const ExecuteCommandParams &Params,
   }
   if (Params.command==Command::_3C_APPLY_FOR_ALL){
     int PtrId = Params._3CFix->ptrID;
-    /*CcInterface.invalidateWildReasonGlobally(PtrId);*/
+    CcInterface.invalidateWildReasonGlobally(PtrId);
     log("Global Pointer Wild.");
     return true;
   }
