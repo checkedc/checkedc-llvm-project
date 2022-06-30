@@ -760,7 +760,6 @@ void ClangdLSPServer::_3CisDone(std::string FileName,
                                       bool ClearDiags) {
   // Get the diagnostics and update the client.
   std::vector<Diag> Diagnostics;
-  log("In  3c is Done: Part 1");
   Diagnostics.clear();
   if (!ClearDiags) {
     std::lock_guard<std::mutex> lock(Server->DiagInfofor3C.DiagMutex);
@@ -1758,7 +1757,8 @@ void ClangdLSPServer::onDiagnosticsReady(PathRef File, llvm::StringRef Version,
                  Notification.diagnostics.push_back(std::move(Diag));
                });
   }
-
+  auto size = Diagnostics.size();
+  log(std::to_string(size).c_str());
   publishDiagnostics(Notification);
 #else
   PublishDiagnosticsParams Notification;

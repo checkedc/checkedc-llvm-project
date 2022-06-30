@@ -236,17 +236,21 @@ void ClangdServer::execute3CCommand(_3CInterface &LSPInter,_3CLSPCallBack *TCCB)
     LSPInter.buildInitialConstraints();
     LSPInter.solveConstraints();
     LSPInter.writeAllConvertedFilesToDisk();
+    LSPInter.resetInterface();
+    LSPInter.parseASTs();
     LSPInter.addVariables();
     LSPInter.buildInitialConstraints();
     LSPInter.solveConstraints();
+    LSPInter.CStateisclear=false;
     log("Completed Interface Run now move onto Diagnostics");
     auto &E = LSPInter.getWildPtrsInfo();
     log("Got Diagnostics!!");
     DiagInfofor3C.PopulateDiagsFromConstraintsInfo(E);
     TCCB->sendMessage("Populated Issues");
-    report3CDiagsForAllFiles(E,TCCB);
-    log("Completed 2nd Time");
+    report3CDiagsForAllFiles(E, TCCB);
     log("Run Completed");
+    LSPInter.CStateisclear=true;
+
   };
   WorkScheduler.run("3C: Running the initial run","",Task);
 }
@@ -266,7 +270,6 @@ void ClangdServer::secondrun3C(_3CInterface &LSPInter, _3CLSPCallBack *ConvCB) {
     DiagInfofor3C.PopulateDiagsFromConstraintsInfo(E);
     ConvCB->sendMessage("Populated Issues");
     report3CDiagsForAllFiles(E,ConvCB);
-    log("Completed 2nd Time");
   };
   WorkScheduler.run("3C: Second Run of 3C ","",Task);
 
@@ -287,6 +290,7 @@ void ClangdServer::execute3CFix(_3CInterface &LSPInter,ExecuteCommandParams Para
       clear3CDiagsForAllFiles(WildPtrsInfo, ConvCB);
       ConvCB->sendMessage("3C modifying constraints.");
       ExecuteCCCommand(Params, RplMsg, LSPInter);
+      LSPInter.writeAllConvertedFilesToDisk();
       this->DiagInfofor3C.ClearAllDiags();
       log("Done removing the constraint");
       auto &NewInfo = LSPInter.getWildPtrsInfo();
@@ -304,7 +308,7 @@ void ClangdServer::execute3CFix(_3CInterface &LSPInter,ExecuteCommandParams Para
   WorkScheduler.run("3C: Applying on demand modifications","",Task);
 }
 void ClangdServer::_3CCloseDocument(std::string FileName,_3CLSPCallBack *ConvCB) {
-  auto Task = [this,FileName,ConvCB](){
+  auto Task = [FileName,ConvCB](){
     log("3C: close file: {0}\n",FileName);
     ConvCB->_3CisDone(FileName,true);
 

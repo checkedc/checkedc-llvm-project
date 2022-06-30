@@ -580,6 +580,7 @@ bool _3CInterface::solveConstraints() {
     errs() << "Constraints solved\n";
 
   if (_3COpts.WarnRootCause)
+    assert(CStateisclear=true);
     GlobalProgramInfo.computeInterimConstraintState(FilePaths);
 
   if (_3COpts.DumpIntermediate)
@@ -687,6 +688,7 @@ bool _3CInterface::dumpStats() {
 
   if (_3COpts.DumpStats) {
     GlobalProgramInfo.printStats(FilePaths, llvm::errs(), true);
+    assert(CStateisclear=true);
     GlobalProgramInfo.computeInterimConstraintState(FilePaths);
     std::error_code Ec;
     llvm::raw_fd_ostream OutputJson(_3COpts.StatsOutputJson, Ec);
@@ -769,6 +771,7 @@ bool _3CInterface::makeSinglePtrNonWild(ConstraintKey TargetPtr) {
   runSolver(GlobalProgramInfo, FilePaths);
 
   // Compute new disjoint set.
+  assert(CStateisclear=true);
   GlobalProgramInfo.computeInterimConstraintState(FilePaths);
 
   // Get new WILD pointers.
@@ -805,7 +808,8 @@ bool _3CInterface::invalidateWildReasonGlobally(ConstraintKey PtrKey) {
   runSolver(GlobalProgramInfo, FilePaths);
 
   // Recompute the WILD pointer disjoint sets.
-  GlobalProgramInfo.computeInterimConstraintState(FilePaths);
+  assert(CStateisclear=true);
+    GlobalProgramInfo.computeInterimConstraintState(FilePaths);
 
   // Computed the number of removed pointers.
   CVars &NewWildPtrs = PtrDisjointSet.AllWildAtoms;
@@ -815,6 +819,11 @@ bool _3CInterface::invalidateWildReasonGlobally(ConstraintKey PtrKey) {
                       std::inserter(RemovePtrs, RemovePtrs.begin()));
 
   return !RemovePtrs.empty();
+}
+
+void _3CInterface::resetInterface() {
+  GlobalProgramInfo.clear();
+  ASTs.clear();
 }
 
 

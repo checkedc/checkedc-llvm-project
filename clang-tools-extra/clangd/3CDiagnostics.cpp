@@ -9,7 +9,7 @@
 #ifdef LSP3C
 #include "3CDiagnostics.h"
 #include "support/Logger.h"
-#define DEF_PTR_SIZE 4
+#define DEF_PTR_SIZE 5
 
 namespace clang {
 namespace clangd {
@@ -27,7 +27,7 @@ bool _3CDiagnostics::PopulateDiagsFromConstraintsInfo(ConstraintsInfo &Line) {
   std::lock_guard<std::mutex> Lock(DiagMutex);
   std::set<ConstraintKey> ProcessedCKeys;
   ProcessedCKeys.clear();
-  log("Populating Part 1");
+  int i=0;
   auto GetLocRange = [](uint32_t Line, uint32_t ColNoS,
                         uint32_t ColNoE) -> Range {
     Range nRange;
@@ -43,8 +43,8 @@ bool _3CDiagnostics::PopulateDiagsFromConstraintsInfo(ConstraintsInfo &Line) {
     return nRange;
   };
 
+
   for (auto &WReason : Line.RootWildAtomsWithReason) {
-    log("Populating Part 2");
     if (Line.AtomSourceMap.find(WReason.first) != Line.AtomSourceMap.end()) {
       auto PsInfo = Line.AtomSourceMap[WReason.first];
       std::string FilePath = PsInfo.getFileName();
@@ -55,7 +55,7 @@ bool _3CDiagnostics::PopulateDiagsFromConstraintsInfo(ConstraintsInfo &Line) {
       ProcessedCKeys.insert(WReason.first);
 
       Diag NewDiag;
-      NewDiag.Range = GetLocRange(PsInfo.getLineNo(), PsInfo.getColSNo(),
+      NewDiag.Range = GetLocRange(PsInfo.getLineNo(), PsInfo.getColSNo()-1,
                                   PsInfo.getColENo());
       NewDiag.Source = Diag::Main3C;
       NewDiag.Severity = DiagnosticsEngine::Level::Error;
@@ -70,14 +70,15 @@ bool _3CDiagnostics::PopulateDiagsFromConstraintsInfo(ConstraintsInfo &Line) {
         DiagNote.AbsFile = SL.getFileName();
         DiagNote.Range =
             GetLocRange(SL.getLineNo(), SL.getColSNo(), SL.getColENo());
-        DiagNote.Message = "Go here to know the root cause for this.";
+        DiagNote.Message = WReason.second.getReason();
         NewDiag.Notes.push_back(DiagNote);
       }
       AllFileDiagnostics[FilePath].push_back(NewDiag);
-      log(AllFileDiagnostics[FilePath].data()->Message.data());
+      i++;
 
     }
   }
+  log(std::to_string(i).c_str());
 
   return true;
 }

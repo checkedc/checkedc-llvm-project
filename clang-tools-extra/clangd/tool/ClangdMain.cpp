@@ -918,16 +918,16 @@ clangd accepts flags on the commandline, and in the CLANGD_FLAGS environment var
                                                 std::move(*Mappings));
   }
 #ifdef LSP3C
-  struct _3COptions CcOptions;
+  struct _3COptions CcOptions={0};
   CcOptions.AllTypes=true;
   CcOptions.AddCheckedRegions=false;
-  CcOptions.HandleVARARGS=true;
-  CcOptions.EnableCCTypeChecker=true;
+  CcOptions.WarnRootCause=true;
+  CcOptions.AllowUnwritableChanges=true;
+  CcOptions.ItypesForExtern=true;
   CcOptions.InferTypesForUndefs=true;
-  CcOptions.DumpIntermediate=false;
+  CcOptions.HandleVARARGS= true;
   CcOptions.OutputPostfix="null";
-  CcOptions.AllocatorFunctions = {};
-
+  CcOptions.AllocatorFunctions={};
   std::string ErrorMsg;
   // This is a weird hack to go over the condition of not finding a comp DB
   // todo Cleanup this code segment below
