@@ -191,6 +191,7 @@ public:
     TmpBoundsKey.clear();
     ArrPointersWithArithmetic.clear();
   }
+  void clear();
 
   typedef std::tuple<std::string, std::string, bool, unsigned> ParamDeclType;
 

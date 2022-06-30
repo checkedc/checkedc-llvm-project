@@ -83,6 +83,7 @@ public:
   typedef std::map<std::string, ExternalFunctionMapType> StaticFunctionMapType;
 
   ProgramInfo();
+  void clear();
   void print(llvm::raw_ostream &O) const;
   void dump() const { print(llvm::errs()); }
   void dumpJson(llvm::raw_ostream &O) const;
@@ -227,6 +228,8 @@ private:
   Constraints CS;
   // Is the ProgramInfo persisted? Only tested in asserts. Starts at true.
   bool Persisted;
+  std::mutex clearCState;
+
 
   // Map of global decls for which we don't have a definition, the keys are
   // names of external vars, the value is whether the def

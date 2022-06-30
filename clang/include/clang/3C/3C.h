@@ -33,6 +33,8 @@ public:
   // Mutex for this interface.
   std::mutex InterfaceMutex;
 
+  bool CStateisclear=true;
+
   // If the parameters are invalid, this function prints an error message to
   // stderr and returns null.
   //
@@ -76,6 +78,8 @@ public:
   // pointers, which are wild because of the same reason, as non-wild
   // as well.
   bool invalidateWildReasonGlobally(ConstraintKey PtrKey);
+
+  void resetInterface();
 
   // Rewriting.
 

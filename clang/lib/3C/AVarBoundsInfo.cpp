@@ -816,6 +816,28 @@ void PotentialBoundsInfo::addPotentialBoundsPOne(
   }
 }
 
+void AVarBoundsInfo::clear() {
+  BCount = 1;
+  PVarInfo.clear();
+  ConstVarKeys.clear();
+  BInfo.clear();
+  InvalidBounds.clear();
+  ArrPointersWithArithmetic.clear();
+  IneligibleForFreshLowerBound.clear();
+  PointerBoundsKey.clear();
+  ArrPointerBoundsKey.clear();
+  NtArrPointerBoundsKey.clear();
+  PointersWithImpossibleBounds.clear();
+  InProgramArrPtrBoundsKeys.clear();
+  TmpBoundsKey.clear();
+
+  DeclVarMap.clear();
+  ParamDeclVarMap.clear();
+  FuncDeclVarMap.clear();
+
+  ArrPointersWithArithmetic.clear();
+}
+
 bool AVarBoundsInfo::isValidBoundVariable(clang::Decl *D) {
   if (D == nullptr)
     return false;
