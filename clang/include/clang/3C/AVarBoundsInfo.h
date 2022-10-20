@@ -336,7 +336,7 @@ private:
 
   friend struct llvm::DOTGraphTraits<AVarGraph>;
   // List of bounds priority in descending order of priorities.
-  static std::vector<BoundsPriority> PrioList;
+  const static std::vector<BoundsPriority> PrioList;
 
   // Variable that is used to generate new bound keys.
   BoundsKey BCount;

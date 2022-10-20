@@ -29,7 +29,7 @@
 class _3CInterface {
 
 public:
-  ProgramInfo GlobalProgramInfo;
+  ProgramInfo * GlobalProgramInfo;
   // Mutex for this interface.
   std::mutex InterfaceMutex;
 

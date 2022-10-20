@@ -23,6 +23,38 @@ ProgramInfo::ProgramInfo() : Persisted(true) {
   StaticFunctionFVCons.clear();
 }
 
+ProgramInfo::~ProgramInfo(){
+  std::set<ConstraintVariable *> CVars;
+  int FndFlag = 0;
+  for (auto &Var : Variables) {
+    for(auto &CVar: CVars) {
+      if (CVar == Var.second) {
+        FndFlag = 1;
+        break;
+      }
+    }
+    if(!FndFlag){
+      CVars.insert(Var.second);
+      delete (Var.second);
+    }
+    FndFlag = 0;
+  }
+
+  for (auto &FVCons : ExternalFunctionFVCons) {
+    for(auto &CVar: CVars) {
+      if (CVar == FVCons.second) {
+        FndFlag = 1;
+        break;
+      }
+    }
+    if(!FndFlag){
+      CVars.insert(FVCons.second);
+      delete (FVCons.second);
+    }
+    FndFlag = 0;
+  }
+}
+
 void dumpExtFuncMap(const ProgramInfo::ExternalFunctionMapType &EMap,
                     raw_ostream &O) {
   for (const auto &DefM : EMap) {

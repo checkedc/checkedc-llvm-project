@@ -17,7 +17,7 @@
 #include <sstream>
 #include <clang/3C/LowerBoundAssignment.h>
 
-std::vector<BoundsPriority> AVarBoundsInfo::PrioList{Declared, Allocator,
+const std::vector<BoundsPriority> AVarBoundsInfo::PrioList{Declared, Allocator,
                                                      FlowInferred, Heuristics};
 
 void AVarBoundsStats::print(llvm::raw_ostream &O,
