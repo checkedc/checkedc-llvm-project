@@ -342,7 +342,6 @@ _3CInterface::create(const struct _3COptions &CCopt,
   // NOLINTNEXTLINE(readability-identifier-naming)
   std::unique_ptr<_3CInterface> _3CInter(
       new _3CInterface(CCopt, SourceFileList, CompDB));
-  
   if (_3CInter->ConstructionFailed) {
     return nullptr;
   }
