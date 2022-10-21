@@ -25,33 +25,18 @@ ProgramInfo::ProgramInfo() : Persisted(true) {
 
 ProgramInfo::~ProgramInfo(){
   std::set<ConstraintVariable *> CVars;
-  int FndFlag = 0;
   for (auto &Var : Variables) {
-    for(auto &CVar: CVars) {
-      if (CVar == Var.second) {
-        FndFlag = 1;
-        break;
-      }
-    }
-    if(!FndFlag){
+    if( CVars.find(Var.second) == CVars.end()){
       CVars.insert(Var.second);
       delete (Var.second);
     }
-    FndFlag = 0;
   }
 
   for (auto &FVCons : ExternalFunctionFVCons) {
-    for(auto &CVar: CVars) {
-      if (CVar == FVCons.second) {
-        FndFlag = 1;
-        break;
+      if( CVars.find(FVCons.second) == CVars.end()){
+        CVars.insert(FVCons.second);
+        delete (FVCons.second);
       }
-    }
-    if(!FndFlag){
-      CVars.insert(FVCons.second);
-      delete (FVCons.second);
-    }
-    FndFlag = 0;
   }
 }
 

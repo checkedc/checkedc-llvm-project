@@ -424,16 +424,38 @@ std::string getSourceText(const clang::CharSourceRange &SR,
   return Srctxt.str();
 }
 
-unsigned longestCommonSubsequence(const char *Str1, const char *Str2,
-                                  unsigned long Str1Len,
-                                  unsigned long Str2Len) {
-  if (Str1Len == 0 || Str2Len == 0)
-    return 0;
-  if (Str1[Str1Len - 1] == Str2[Str2Len - 1])
-    return 1 + longestCommonSubsequence(Str1, Str2, Str1Len - 1, Str2Len - 1);
-  return std::max(longestCommonSubsequence(Str1, Str2, Str1Len, Str2Len - 1),
-                  longestCommonSubsequence(Str1, Str2, Str1Len - 1, Str2Len));
+unsigned longestCommonSubsequence(const char* X,const char* Y,
+                            unsigned long m,
+                            unsigned long n)
+{
+    unsigned long L[m + 1][n + 1];
+    unsigned long i, j;
+
+    for (i = 0; i <= m; i++) {
+        for (j = 0; j <= n; j++) {
+            if (i == 0 || j == 0)
+                L[i][j] = 0;
+  
+            else if (X[i - 1] == Y[j - 1])
+                L[i][j] = L[i - 1][j - 1] + 1;
+  
+            else
+                L[i][j] = std::max(L[i - 1][j], L[i][j - 1]);
+        }
+    }
+  return L[m][n];
 }
+
+// unsigned longestCommonSubsequence(const char *Str1, const char *Str2,
+//                                   unsigned long Str1Len,
+//                                   unsigned long Str2Len) {
+//   if (Str1Len == 0 || Str2Len == 0)
+//     return 0;
+//   if (Str1[Str1Len - 1] == Str2[Str2Len - 1])
+//     return 1 + longestCommonSubsequence(Str1, Str2, Str1Len - 1, Str2Len - 1);
+//   return std::max(longestCommonSubsequence(Str1, Str2, Str1Len, Str2Len - 1),
+//                   longestCommonSubsequence(Str1, Str2, Str1Len - 1, Str2Len));
+// }
 
 bool isTypeAnonymous(const clang::Type *T) {
   return T->isRecordType() &&
