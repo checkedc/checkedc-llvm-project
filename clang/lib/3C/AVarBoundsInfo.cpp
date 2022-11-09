@@ -1462,6 +1462,84 @@ void AVarBoundsInfo::computeArrPointers(const ProgramInfo *PI) {
     ArrPointerBoundsKey.insert(T.first);
 }
 
+void AVarBoundsInfo::removeConflicts(){
+  std::set<BoundsKey> WorkList;
+  std::set<BoundsKey> OldWorkList;
+  std::set<BoundsKey> SuccKeys;
+  bool isConflicting = false;
+  bool workListChanged = false;
+
+  // Nodes from ProgVarGraph
+  auto Nodes = this->ProgVarGraph.getNodes();
+  // Walk the ProgVarGraph, find conflicting bounds
+  // and add them to WorkList
+  for(auto &N: Nodes){
+    isConflicting = false;
+    BoundsKey Curr = N.first;
+    std::set<BoundsKey> PredKeys;
+    auto CurrABounds = getBounds(Curr, BoundsPriority::FlowInferred);
+    // Utility to check if bounds of two BoundsKey are the same
+    auto isSame = [this](BoundsKey A, BoundsKey B){
+      auto AABounds = getBounds(A, BoundsPriority::FlowInferred);
+      auto BABounds = getBounds(B);
+      // No bounds founds for PredKey
+      if(!BABounds){
+        return false;
+      }
+      return AABounds->getLengthKey() == BABounds->getLengthKey() &&
+           AABounds->getLowerBoundKey() == BABounds->getLowerBoundKey();
+    };
+    // If the bounds of Curr is FlowInferred, then check
+    // if the predecessors Bounds match with Curr's.
+    if(CurrABounds){
+      this->ProgVarGraph.getPredecessors(Curr, PredKeys);
+      for(auto &P: PredKeys){
+        if(!isSame(Curr, P)){
+          isConflicting = true;
+          removeBounds(P, BoundsPriority::FlowInferred);
+          WorkList.insert(P);
+        }
+      }
+      if(isConflicting){
+        WorkList.insert(Curr);
+        removeBounds(Curr, BoundsPriority::FlowInferred);
+      }
+    }
+  }
+  
+  workListChanged = OldWorkList != WorkList;
+  OldWorkList = WorkList;
+
+  // For every node in worklist, find the successors in all the graphs
+  // and marking them unknown and adding it to WorkList.
+  while(workListChanged){
+    for(auto &N: OldWorkList){
+      this->ProgVarGraph.getSuccessors(N, SuccKeys);
+      for(auto &Succ: SuccKeys){
+        removeBounds(Succ, BoundsPriority::FlowInferred);
+        WorkList.insert(Succ);
+      }
+      SuccKeys.clear();
+      this->CtxSensProgVarGraph.getSuccessors(N, SuccKeys);
+      for(auto &Succ: SuccKeys){
+        removeBounds(Succ, BoundsPriority::FlowInferred);
+        WorkList.insert(Succ);
+      }
+      SuccKeys.clear();
+      this->RevCtxSensProgVarGraph.getSuccessors(N, SuccKeys);
+      for(auto &Succ: SuccKeys){
+        removeBounds(Succ, BoundsPriority::FlowInferred);
+        WorkList.insert(Succ);
+      }
+      SuccKeys.clear();
+    }
+    workListChanged = OldWorkList != WorkList;
+    OldWorkList = WorkList;
+  }
+  return;
+}
+
+
 // Find the set of array pointers that need bounds. This is computed as all
 // array pointers that do not currently have a bound, have an invalid bound,
 // or have an impossible bound.
@@ -1567,6 +1645,8 @@ void AVarBoundsInfo::performFlowAnalysis(ProgramInfo *PI) {
     }
     OuterChanged = (TmpArrNeededBounds != ArrNeededBounds);
   }
+
+  removeConflicts();
 
   PStats.endArrayBoundsInferenceTime();
 }

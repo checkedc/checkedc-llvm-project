@@ -450,6 +450,10 @@ private:
   // Get all the array pointers that need bounds.
   void getBoundsNeededArrPointers(std::set<BoundsKey> &AB) const;
 
+  // Remove bounds conflits by walking though all graphs
+  // and marking nodes with conflicting bounds as unknown.
+  void removeConflicts();
+
   // Keep only highest priority bounds for all the provided BoundsKeys
   // returns true if any thing changed, else false.
   bool keepHighestPriorityBounds();
