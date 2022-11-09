@@ -1484,7 +1484,7 @@ void AVarBoundsInfo::removeConflicts(){
       auto BABounds = getBounds(B);
       // No bounds founds for PredKey
       if(!BABounds){
-        return false;
+        return true;
       }
       return AABounds->getLengthKey() == BABounds->getLengthKey() &&
            AABounds->getLowerBoundKey() == BABounds->getLowerBoundKey();
