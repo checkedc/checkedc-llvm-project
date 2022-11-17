@@ -208,10 +208,6 @@ public:
     return getNeighbors(D, DataSet, false, Append);
   }
 
-  auto getNodes(){
-    return NodeSet;
-  }
-  
   NodeType *findNode(Data D) const {
     if (NodeSet.find(D) != NodeSet.end())
       return NodeSet.at(D);

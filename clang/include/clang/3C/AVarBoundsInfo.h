@@ -231,6 +231,12 @@ public:
   // Generate a random bounds key to be used for inference.
   BoundsKey getRandomBKey();
 
+  AVarGraph &getProgVarGraph(){ return ProgVarGraph; }
+
+  AVarGraph &getCtxSensProgVarGraph(){ return CtxSensProgVarGraph; }
+
+  AVarGraph &getRevCtxSensProgVarGraph(){ return RevCtxSensProgVarGraph; }
+
   // Add Assignments between variables. These methods will add edges between
   // corresponding BoundsKeys
   bool addAssignment(BoundsKey L, BoundsKey R);
@@ -449,10 +455,6 @@ private:
 
   // Get all the array pointers that need bounds.
   void getBoundsNeededArrPointers(std::set<BoundsKey> &AB) const;
-
-  // Remove bounds conflits by walking though all graphs
-  // and marking nodes with conflicting bounds as unknown.
-  void removeConflicts();
 
   // Keep only highest priority bounds for all the provided BoundsKeys
   // returns true if any thing changed, else false.
