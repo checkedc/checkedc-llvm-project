@@ -20,17 +20,17 @@ class AVarBoundsConflictResolver {
 public:
     // Fill WorkList with conflicting bounds. This list will be later used to
     // propogate the conflicts.
-    static void seedInitialWorkList(AVarBoundsInfo *BI,
-                                    AVarGraph &BKGraph,
-                                    std::set<BoundsKey> &WorkList);
+    void seedInitialWorkList(AVarBoundsInfo *BI,
+                             AVarGraph &BKGraph,
+                             std::set<BoundsKey> &WorkList);
     
     // Using the WorkList, propogate the conflicts to all conncted Nodes in the graph
-    static void propogateConflicts(const BoundsKey &N,
-                                   AVarBoundsInfo *BI,
-                                   AVarGraph &BKGraph, std::set<BoundsKey> &WorkList);
+    void propogateConflicts(const BoundsKey &N,
+                            AVarBoundsInfo *BI,
+                            AVarGraph &BKGraph, std::set<BoundsKey> &WorkList);
     
     // Fix all conflicts in the graphs.
-    static void resolveConflicts(AVarBoundsInfo *BI);
+    void resolveConflicts(AVarBoundsInfo *BI);
 };
 
 #endif // LLVM_CLANG_3C_AVARBOUNDSCONFLICTRESOLVER_H

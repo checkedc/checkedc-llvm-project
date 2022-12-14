@@ -1502,6 +1502,7 @@ void AVarBoundsInfo::getBoundsNeededArrPointers(std::set<BoundsKey> &AB) const {
 void AVarBoundsInfo::performFlowAnalysis(ProgramInfo *PI) {
   auto &PStats = PI->getPerfStats();
   PStats.startArrayBoundsInferenceTime();
+  AVarBoundsConflictResolver AVarBoundsConflictResolver;
 
   // First get all the pointer vars which are ARRs. Results is stored in the
   // field ArrPointerBoundsKey. This also populates some other sets that seem to
@@ -1569,7 +1570,7 @@ void AVarBoundsInfo::performFlowAnalysis(ProgramInfo *PI) {
     OuterChanged = (TmpArrNeededBounds != ArrNeededBounds);
   }
 
-  AVarBoundsConflictResolver::resolveConflicts(this);
+  AVarBoundsConflictResolver.resolveConflicts(this);
 
   PStats.endArrayBoundsInferenceTime();
 }
