@@ -301,6 +301,11 @@ static cl::opt<bool> OptForceItypes(
     cl::init(false), cl::cat(_3CCategory));
 #endif
 
+static cl::opt<bool> OptReRun(
+    "rerun",
+    cl::desc("Run 3C second time for purpose of 3clsp."),
+    cl::init(false), cl::cat(_3CCategory));
+
 // clang-format on
 
 int main(int argc, const char **argv) {
@@ -465,17 +470,19 @@ int main(int argc, const char **argv) {
 
   // Even if all passes succeeded, we could still have a diagnostic verification
   // failure.
-
-  _3CInterface.resetInterface();
-  _3CInterface.parseASTs();
-  _3CInterface.addVariables();
-  _3CInterface.buildInitialConstraints();
-  _3CInterface.solveConstraints();
-
-  auto Something = _3CInterface.getWildPtrsInfo();
-  auto ID = Something.RootWildAtomsWithReason.begin()->first;
-  //_3CInterface.makeSinglePtrNonWild(ID);
-  auto Again = _3CInterface.getWildPtrsInfo().RootWildAtomsWithReason;
+  if (OptReRun) {
+    if (OptVerbose)
+      errs() << "Running 3C second time.\n";
+    _3CInterface.resetInterface();
+    _3CInterface.parseASTs();
+    _3CInterface.addVariables();
+    _3CInterface.buildInitialConstraints();
+    _3CInterface.solveConstraints();
+  }
+  // auto Something = _3CInterface.getWildPtrsInfo();
+  // auto ID = Something.RootWildAtomsWithReason.begin()->first;
+  // //_3CInterface.makeSinglePtrNonWild(ID);
+  // auto Again = _3CInterface.getWildPtrsInfo().RootWildAtomsWithReason;
 
   return _3CInterface.determineExitCode();
 }

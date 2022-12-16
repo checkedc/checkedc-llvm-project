@@ -220,6 +220,9 @@ public:
   // Insert the variable into the system.
   void insertVariable(clang::Decl *D);
 
+  // Make a BoundsKey as invalid
+  void insertInToImpossibleBounds(BoundsKey BK) { PointersWithImpossibleBounds.insert(BK); }
+
   // Get variable helpers. These functions will fatal fail if the provided
   // Decl cannot have a BoundsKey
   BoundsKey getVariable(clang::VarDecl *VD);
@@ -231,11 +234,11 @@ public:
   // Generate a random bounds key to be used for inference.
   BoundsKey getRandomBKey();
 
-  AVarGraph &getProgVarGraph(){ return ProgVarGraph; }
+  AVarGraph &getProgVarGraph() { return ProgVarGraph; }
 
-  AVarGraph &getCtxSensProgVarGraph(){ return CtxSensProgVarGraph; }
+  AVarGraph &getCtxSensProgVarGraph() { return CtxSensProgVarGraph; }
 
-  AVarGraph &getRevCtxSensProgVarGraph(){ return RevCtxSensProgVarGraph; }
+  AVarGraph &getRevCtxSensProgVarGraph() { return RevCtxSensProgVarGraph; }
 
   // Add Assignments between variables. These methods will add edges between
   // corresponding BoundsKeys
@@ -294,7 +297,7 @@ public:
   bool isInAccessibleScope(BoundsKey From, BoundsKey To);
 
   // Propagate the array bounds information for all array ptrs.
-  void performFlowAnalysis(ProgramInfo *PI);
+  void performFlowAnalysis(ProgramInfo *PI, bool ResolveConflits = false);
 
   // Get the context sensitive BoundsKey for the given key at CallSite
   // located at PSL.
@@ -393,8 +396,8 @@ private:
   // BiMap of function keys and BoundsKey for function return values.
   BiMap<std::tuple<std::string, std::string, bool>, BoundsKey> FuncDeclVarMap;
 
-  PVConstraint *
-  getConstraintVariable(const ProgramInfo *PI, BoundsKey BK) const;
+  PVConstraint *getConstraintVariable(const ProgramInfo *PI,
+                                      BoundsKey BK) const;
 
   // Graph of all program variables.
   AVarGraph ProgVarGraph;

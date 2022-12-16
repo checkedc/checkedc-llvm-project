@@ -583,9 +583,10 @@ bool _3CInterface::solveConstraints() {
   if (_3COpts.Verbose)
     errs() << "Constraints solved\n";
 
-  if (_3COpts.WarnRootCause)
+  if (_3COpts.WarnRootCause) {
     assert(CStateisclear=true);
     GlobalProgramInfo->computeInterimConstraintState(FilePaths);
+  }
 
   if (_3COpts.DumpIntermediate)
     dumpConstraintOutputJson(FINAL_OUTPUT_SUFFIX, *GlobalProgramInfo);
@@ -632,7 +633,7 @@ bool _3CInterface::solveConstraints() {
 
   if (_3COpts.AllTypes) {
     // Propagate data-flow information for Array pointers.
-    GlobalProgramInfo->getABoundsInfo().performFlowAnalysis(*&GlobalProgramInfo);
+    GlobalProgramInfo->getABoundsInfo().performFlowAnalysis(*&GlobalProgramInfo, true);
 
     /*if (DebugArrSolver)
       GlobalProgramInfo->getABoundsInfo().dumpAVarGraph(
@@ -829,8 +830,6 @@ void _3CInterface::resetInterface() {
   if(GlobalProgramInfo)
     delete (GlobalProgramInfo);
   GlobalProgramInfo = new ProgramInfo();
-  //GlobalProgramInfo->clear();
-  ASTs.clear();
 }
 
 
