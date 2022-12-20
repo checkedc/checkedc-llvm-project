@@ -28,13 +28,17 @@ void AVarBoundsConflictResolver::seedInitialWorkList(AVarBoundsInfo *BI,
       ABI.convergeInferredBounds();
       ABI.clearInferredBounds();
       ABounds *NewABounds = BI->getBounds(Curr, BoundsPriority::FlowInferred);
-      // If the node does not have FlowInferred bounds or
-      // it has a bounds which is different from the previous one,
-      // then we add the node to WorkList.
-      if (!NewABounds || !NewABounds->areSame(OldABounds, BI)) {
+      //If we were not able to predict new bounds, put back the old bounds
+      if (!NewABounds) {
+        BI->mergeBounds(Curr, BoundsPriority::FlowInferred, OldABounds);
+        continue;
+      }
+      // If it has a bounds which is different from the previous one,
+      // then we add the node to WorkList and to ImpossibleBounds.
+      if (!NewABounds->areSame(OldABounds, BI)) {
         WorkList.insert(Curr);
-        if (NewABounds)
-          BI->removeBounds(Curr, BoundsPriority::FlowInferred);
+        BI->insertInToImpossibleBounds(Curr);
+        BI->removeBounds(Curr, BoundsPriority::FlowInferred);
       }
       delete OldABounds;
     }
@@ -58,8 +62,10 @@ void AVarBoundsConflictResolver::propogateConflicts(const BoundsKey &N,
       ABI.convergeInferredBounds();
       ABI.clearInferredBounds();
       ABounds *NewABounds = BI->getBounds(S, BoundsPriority::FlowInferred);
-      if (!NewABounds || !NewABounds->areSame(OldABounds, BI))
+      if (!NewABounds || !NewABounds->areSame(OldABounds, BI)) {
         WorkList.insert(S);
+        BI->insertInToImpossibleBounds(S);
+      }
       
       delete OldABounds;
     }
@@ -72,10 +78,9 @@ void AVarBoundsConflictResolver::resolveConflicts(AVarBoundsInfo *BI) {
   
   // Find initial conflicts from ProgVarGraph and add it to WorkList
   seedInitialWorkList(BI, BI->getProgVarGraph(), WorkList);
-  
+
   bool WorkListChanged = WorkList != OldWorkList;
   OldWorkList = WorkList;
-
   while (WorkListChanged) {
     for (auto &N : OldWorkList) {
       // Propogate conflicts in ProgVarGraph
@@ -85,7 +90,7 @@ void AVarBoundsConflictResolver::resolveConflicts(AVarBoundsInfo *BI) {
       // Propogate conflicts in RevCtxSensProgVarGraph
       propogateConflicts(N, BI, BI->getRevCtxSensProgVarGraph(), WorkList);
     }
-    WorkListChanged = OldWorkList != WorkList;
+    WorkListChanged = (OldWorkList != WorkList);
     OldWorkList = WorkList;
   }
 }
