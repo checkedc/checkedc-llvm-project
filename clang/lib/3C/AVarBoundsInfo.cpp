@@ -1506,7 +1506,7 @@ void AVarBoundsInfo::performFlowAnalysis(ProgramInfo *PI, std::set<BoundsKey> &C
 
   // Mark the set of nodes as Impossible
   if (!RunResolver) {
-    for (auto &N: ConflictingNodes)
+    for (auto &N : ConflictingNodes)
       insertInToImpossibleBounds(N);
   }
 
@@ -1575,7 +1575,7 @@ void AVarBoundsInfo::performFlowAnalysis(ProgramInfo *PI, std::set<BoundsKey> &C
     }
     OuterChanged = (TmpArrNeededBounds != ArrNeededBounds);
   }
-  
+
   if (RunResolver) {
     AVarBoundsConflictResolver AVarBoundsConflictResolver;
     AVarBoundsConflictResolver.resolveConflicts(this, ConflictingNodes);
