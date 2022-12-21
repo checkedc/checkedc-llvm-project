@@ -297,7 +297,8 @@ public:
   bool isInAccessibleScope(BoundsKey From, BoundsKey To);
 
   // Propagate the array bounds information for all array ptrs.
-  void performFlowAnalysis(ProgramInfo *PI, bool ResolveConflits = false);
+  void performFlowAnalysis(ProgramInfo *PI, std::set<BoundsKey> &ConflictingNodes,
+                           bool RunResolver = false);
 
   // Get the context sensitive BoundsKey for the given key at CallSite
   // located at PSL.

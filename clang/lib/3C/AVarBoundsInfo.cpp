@@ -1499,9 +1499,16 @@ void AVarBoundsInfo::getBoundsNeededArrPointers(std::set<BoundsKey> &AB) const {
 // In the above case, we use n as a potential count bounds for arr.
 // Note: we only use potential bounds for a variable when none of its
 // predecessors have bounds.
-void AVarBoundsInfo::performFlowAnalysis(ProgramInfo *PI, bool ResolveConflits) {
+void AVarBoundsInfo::performFlowAnalysis(ProgramInfo *PI, std::set<BoundsKey> &ConflictingNodes,
+                                         bool RunResolver) {
   auto &PStats = PI->getPerfStats();
   PStats.startArrayBoundsInferenceTime();
+
+  // Mark the set of nodes as Impossible
+  if (!RunResolver) {
+    for (auto &N: ConflictingNodes)
+      insertInToImpossibleBounds(N);
+  }
 
   // First get all the pointer vars which are ARRs. Results is stored in the
   // field ArrPointerBoundsKey. This also populates some other sets that seem to
@@ -1568,9 +1575,10 @@ void AVarBoundsInfo::performFlowAnalysis(ProgramInfo *PI, bool ResolveConflits) 
     }
     OuterChanged = (TmpArrNeededBounds != ArrNeededBounds);
   }
-  if (ResolveConflits) {
+  
+  if (RunResolver) {
     AVarBoundsConflictResolver AVarBoundsConflictResolver;
-    AVarBoundsConflictResolver.resolveConflicts(this);
+    AVarBoundsConflictResolver.resolveConflicts(this, ConflictingNodes);
   }
   PStats.endArrayBoundsInferenceTime();
 }

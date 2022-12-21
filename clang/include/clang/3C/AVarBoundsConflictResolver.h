@@ -27,10 +27,12 @@ public:
     // Using the WorkList, propogate the conflicts to all conncted Nodes in the graph
     void propogateConflicts(const BoundsKey &N,
                             AVarBoundsInfo *BI,
-                            AVarGraph &BKGraph, std::set<BoundsKey> &WorkList);
+                            AVarGraph &BKGraph,
+                            std::set<BoundsKey> &WorkList);
     
     // Fix all conflicts in the graphs.
-    void resolveConflicts(AVarBoundsInfo *BI);
+    void resolveConflicts(AVarBoundsInfo *BI,
+                          std::set<BoundsKey> &WorkList);
 };
 
 #endif // LLVM_CLANG_3C_AVARBOUNDSCONFLICTRESOLVER_H
