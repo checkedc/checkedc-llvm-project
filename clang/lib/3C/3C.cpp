@@ -750,6 +750,7 @@ void _3CInterface::invalidateAllConstraintsWithReason(
     delete (ToDelCons);
   }
 }
+
 bool _3CInterface::makeSinglePtrNonWild(ConstraintKey TargetPtr) {
   std::lock_guard<std::mutex> Lock(InterfaceMutex);
   CVars RemovePtrs;
@@ -761,14 +762,13 @@ bool _3CInterface::makeSinglePtrNonWild(ConstraintKey TargetPtr) {
   CVars OldWildPtrs = PtrDisjointSet.AllWildAtoms;
 
   //Delete the constraint that makes the target non-wild
+  VarAtom *VA = CS.getOrCreateVar(TargetPtr, "q", VarAtom::V_Other);
+  Geq NewE(VA, CS.getWild(), ReasonLoc());
+  Constraint *OriginalConstraint = *CS.getConstraints().find(&NewE);
+  CS.removeConstraint(OriginalConstraint);
+  VA->getAllConstraints().erase(OriginalConstraint);
 
-  VarAtom *VA = CS.getOrCreateVar(TargetPtr,"q",VarAtom::V_Other);
-  Geq newE(VA, CS.getWild(),ReasonLoc());
-  Constraint *originalConstraint = *CS.getConstraints().find(&newE);
-  CS.removeConstraint(originalConstraint);
-  VA->getAllConstraints().erase(originalConstraint);
-
-  delete(originalConstraint);
+  delete(OriginalConstraint);
 
   // Reset the constraint system.
   CS.resetEnvironment();
@@ -791,6 +791,7 @@ bool _3CInterface::makeSinglePtrNonWild(ConstraintKey TargetPtr) {
 
   return !RemovePtrs.empty();
 }
+
 bool _3CInterface::invalidateWildReasonGlobally(ConstraintKey PtrKey) {
   std::lock_guard<std::mutex> Lock(InterfaceMutex);
 
@@ -804,7 +805,7 @@ bool _3CInterface::invalidateWildReasonGlobally(ConstraintKey PtrKey) {
 
   // Delete ALL the constraints that have the same given reason.
   VarAtom *VA = CS.getOrCreateVar(PtrKey, "q", VarAtom::V_Other);
-  Geq NewE(VA, CS.getWild(),ReasonLoc());
+  Geq NewE(VA, CS.getWild(), ReasonLoc());
   Constraint *OriginalConstraint = *CS.getConstraints().find(&NewE);
   invalidateAllConstraintsWithReason(OriginalConstraint);
 
@@ -816,7 +817,7 @@ bool _3CInterface::invalidateWildReasonGlobally(ConstraintKey PtrKey) {
 
   // Recompute the WILD pointer disjoint sets.
   assert(CStateisclear=true);
-    GlobalProgramInfo->computeInterimConstraintState(FilePaths);
+  GlobalProgramInfo->computeInterimConstraintState(FilePaths);
 
   // Computed the number of removed pointers.
   CVars &NewWildPtrs = PtrDisjointSet.AllWildAtoms;

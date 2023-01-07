@@ -33,7 +33,7 @@ public:
   // Mutex for this interface.
   std::mutex InterfaceMutex;
 
-  bool CStateisclear=true;
+  bool CStateisclear = true;
 
   // If the parameters are invalid, this function prints an error message to
   // stderr and returns null.

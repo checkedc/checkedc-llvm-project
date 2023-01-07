@@ -588,7 +588,6 @@ void Constraints::clear() {
   TheConstraints.clear();
   ConstraintsByReason.clear();
   resetEnvironment();
-
 }
 
 bool Constraints::checkInitialEnvSanity() {
