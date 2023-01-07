@@ -37,6 +37,7 @@ void AVarBoundsConflictResolver::seedInitialWorkList(AVarBoundsInfo *BI,
       // then we add the node to WorkList and to ImpossibleBounds.
       if (!NewABounds->areSame(OldABounds, BI)) {
         WorkList.insert(Curr);
+        BI->insertInToImpossibleBounds(Curr);
         BI->removeBounds(Curr, BoundsPriority::FlowInferred);
       }
       delete OldABounds;
@@ -63,6 +64,7 @@ void AVarBoundsConflictResolver::propogateConflicts(const BoundsKey &N,
       ABounds *NewABounds = BI->getBounds(S, BoundsPriority::FlowInferred);
       if (!NewABounds || !NewABounds->areSame(OldABounds, BI)) {
         WorkList.insert(S);
+        BI->insertInToImpossibleBounds(S);
       }
       
       delete OldABounds;
@@ -70,13 +72,13 @@ void AVarBoundsConflictResolver::propogateConflicts(const BoundsKey &N,
   }
 }
 
-void AVarBoundsConflictResolver::resolveConflicts(AVarBoundsInfo *BI,
-                                                  std::set<BoundsKey> &WorkList) {
+void AVarBoundsConflictResolver::resolveConflicts(AVarBoundsInfo *BI) {
+  std::set<BoundsKey> WorkList;
   std::set<BoundsKey> OldWorkList;
   
   // Find initial conflicts from ProgVarGraph and add it to WorkList
   seedInitialWorkList(BI, BI->getProgVarGraph(), WorkList);
-
+  
   bool WorkListChanged = WorkList != OldWorkList;
   OldWorkList = WorkList;
   while (WorkListChanged) {

@@ -591,10 +591,6 @@ bool _3CInterface::solveConstraints() {
   if (_3COpts.DumpIntermediate)
     dumpConstraintOutputJson(FINAL_OUTPUT_SUFFIX, *GlobalProgramInfo);
 
-  // Set of Nodes that are conflicting
-  std::set<BoundsKey> BeforeAllocator;
-  std::set<BoundsKey> AfterAllocator;
-  std::set<BoundsKey> FinalConflictingNodes;
 
   if (_3COpts.AllTypes) {
     // Add declared bounds for all constant sized arrays. This needs to happen
@@ -614,7 +610,7 @@ bool _3CInterface::solveConstraints() {
 
     // Propagate initial data-flow information for Array pointers from
     // bounds declarations.
-    GlobalProgramInfo->getABoundsInfo().performFlowAnalysis(*&GlobalProgramInfo, BeforeAllocator, true);
+    GlobalProgramInfo->getABoundsInfo().performFlowAnalysis(*&GlobalProgramInfo);
 
     // 4. Infer the bounds based on calls to malloc and calloc
     AllocBasedBoundsInference ABBI =
@@ -625,7 +621,7 @@ bool _3CInterface::solveConstraints() {
       return false;
 
     // Propagate the information from allocator bounds.
-    GlobalProgramInfo->getABoundsInfo().performFlowAnalysis(*&GlobalProgramInfo, AfterAllocator, true);
+    GlobalProgramInfo->getABoundsInfo().performFlowAnalysis(*&GlobalProgramInfo);
   }
 
   // 5. Run intermediate tool hook to run visitors that need to be executed
@@ -637,13 +633,9 @@ bool _3CInterface::solveConstraints() {
     return false;
 
   if (_3COpts.AllTypes) {
-    // We will make all nodes common to both the sets as Impossible
-    std::set_intersection(BeforeAllocator.begin(), BeforeAllocator.end(),
-                          AfterAllocator.begin(), AfterAllocator.end(),
-                          std::inserter(FinalConflictingNodes, FinalConflictingNodes.begin()));
 
     // Propagate data-flow information for Array pointers.
-    GlobalProgramInfo->getABoundsInfo().performFlowAnalysis(*&GlobalProgramInfo, FinalConflictingNodes);
+    GlobalProgramInfo->getABoundsInfo().performFlowAnalysis(*&GlobalProgramInfo, true);
 
     /*if (DebugArrSolver)
       GlobalProgramInfo->getABoundsInfo().dumpAVarGraph(

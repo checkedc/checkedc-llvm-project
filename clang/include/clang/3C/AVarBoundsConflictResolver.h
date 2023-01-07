@@ -31,8 +31,7 @@ public:
                             std::set<BoundsKey> &WorkList);
     
     // Fix all conflicts in the graphs.
-    void resolveConflicts(AVarBoundsInfo *BI,
-                          std::set<BoundsKey> &WorkList);
+    void resolveConflicts(AVarBoundsInfo *BI);
 };
 
 #endif // LLVM_CLANG_3C_AVARBOUNDSCONFLICTRESOLVER_H
