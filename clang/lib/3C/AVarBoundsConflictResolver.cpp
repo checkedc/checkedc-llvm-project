@@ -28,7 +28,7 @@ void AVarBoundsConflictResolver::seedInitialWorkList(AVarBoundsInfo *BI,
       ABI.convergeInferredBounds();
       ABI.clearInferredBounds();
       ABounds *NewABounds = BI->getBounds(Curr, BoundsPriority::FlowInferred);
-      //If we were not able to predict new bounds, put back the old bounds
+      // If we were not able to predict new bounds, put back the old bounds.
       if (!NewABounds) {
         BI->mergeBounds(Curr, BoundsPriority::FlowInferred, OldABounds);
         continue;

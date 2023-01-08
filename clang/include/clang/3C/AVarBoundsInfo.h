@@ -220,7 +220,7 @@ public:
   // Insert the variable into the system.
   void insertVariable(clang::Decl *D);
 
-  // Make a BoundsKey as invalid
+  // Make a BoundsKey as invalid.
   void insertInToImpossibleBounds(BoundsKey BK) { PointersWithImpossibleBounds.insert(BK); }
 
   // Get variable helpers. These functions will fatal fail if the provided
@@ -297,7 +297,7 @@ public:
   bool isInAccessibleScope(BoundsKey From, BoundsKey To);
 
   // Propagate the array bounds information for all array ptrs.
-  void performFlowAnalysis(ProgramInfo *PI, bool ResolveConflits = false);
+  void performFlowAnalysis(ProgramInfo *PI, bool ResolveConflicts = false);
 
   // Get the context sensitive BoundsKey for the given key at CallSite
   // located at PSL.

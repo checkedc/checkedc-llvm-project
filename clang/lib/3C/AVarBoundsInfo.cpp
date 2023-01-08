@@ -433,6 +433,10 @@ bool AvarBoundsInference::predictBounds(BoundsKey K,
   if (!InferredNBnds.empty()) {
     // All the possible inferred bounds for K.
     BndsKindMap InferredKBnds;
+    // Bounds of neighbours with non-const types only for K.
+    BndsKindMap InferredKNonConstBnds;
+    // Map to keep track of non-const only neighbours and total neighbours.
+    std::map<ABounds::BoundsKind, std::pair<int, int>> NonConstCount;
     // TODO: Figure out if there is a discrepancy and try to implement
     // root-cause analysis.
 
@@ -441,6 +445,34 @@ bool AvarBoundsInference::predictBounds(BoundsKey K,
       for (auto &INB : IN.second) {
         ABounds::BoundsKind NeighbourKind = INB.first;
         const std::set<BoundsKey> &NeighbourSet = INB.second;
+        std::set<BoundsKey> NonConstSet;
+        for (auto &NK : NeighbourSet) {
+          auto *NKVar = this->BI->getProgramVar(NK);
+          if (NKVar != nullptr && !NKVar->isNumConstant())
+            NonConstSet.insert(NK);
+        }
+        // Increment to keep track of count of neighbour of a kind.
+        NonConstCount[NeighbourKind].second++;
+
+        // We have non-const bounds for the current neighbour
+        if (!NonConstSet.empty()) {
+          // Increment to keep track of count of neighbour of a kind
+          // with atleast one non-const bounds.
+          NonConstCount[NeighbourKind].first++;
+
+          if (InferredKNonConstBnds.find(NeighbourKind) == InferredKNonConstBnds.end()) {
+            InferredKNonConstBnds[NeighbourKind] = NonConstSet;
+          } else {
+            const std::set<BoundsKey> &KBoundsOfKind = InferredKNonConstBnds[NeighbourKind];
+            // Keep the bounds in the intersection between the current bounds and
+            // the bounds from the neighbor.
+            std::set<BoundsKey> SharedBounds;
+            findIntersection(KBoundsOfKind, NonConstSet, SharedBounds);
+
+            InferredKNonConstBnds[NeighbourKind] = SharedBounds;
+          }
+        }
+
         if (InferredKBnds.find(NeighbourKind) == InferredKBnds.end()) {
           InferredKBnds[NeighbourKind] = NeighbourSet;
         } else {
@@ -462,6 +494,11 @@ bool AvarBoundsInference::predictBounds(BoundsKey K,
           InferredKBnds[NeighbourKind] = SharedBounds;
         }
       }
+    }
+
+    for (auto &MB : NonConstCount) {
+      if (MB.second.first > (MB.second.second / 2))
+        InferredKBnds[MB.first] = InferredKNonConstBnds[MB.first];
     }
 
     // Now from the newly inferred bounds i.e., InferredKBnds, check
@@ -1499,7 +1536,7 @@ void AVarBoundsInfo::getBoundsNeededArrPointers(std::set<BoundsKey> &AB) const {
 // In the above case, we use n as a potential count bounds for arr.
 // Note: we only use potential bounds for a variable when none of its
 // predecessors have bounds.
-void AVarBoundsInfo::performFlowAnalysis(ProgramInfo *PI, bool ResolveConflits) {
+void AVarBoundsInfo::performFlowAnalysis(ProgramInfo *PI, bool ResolveConflicts) {
   auto &PStats = PI->getPerfStats();
   PStats.startArrayBoundsInferenceTime();
 
@@ -1569,7 +1606,7 @@ void AVarBoundsInfo::performFlowAnalysis(ProgramInfo *PI, bool ResolveConflits) 
     OuterChanged = (TmpArrNeededBounds != ArrNeededBounds);
   }
 
-  if (ResolveConflits) {
+  if (ResolveConflicts) {
     AVarBoundsConflictResolver AVarBoundsConflictResolver;
     AVarBoundsConflictResolver.resolveConflicts(this);
   }
