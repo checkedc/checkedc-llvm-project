@@ -18,10 +18,28 @@ void AVarBoundsConflictResolver::seedInitialWorkList(AVarBoundsInfo *BI,
   AvarBoundsInference ABI(BI);
   // Make sure previous inference does not interfere.
   ABI.clearInferredBounds();
+
+  // Utility to check if atleast one neighbour of a node
+  // is having same BoundsKind.
+  auto IsSameKind = [&BI, &BKGraph](BoundsKey K, ABounds *KAB) {
+    std::set<BoundsKey> PredKeys;
+    BKGraph.getPredecessors(K, PredKeys);
+    for (auto &N : PredKeys) {
+      ABounds *NAB = BI->getBounds(N);
+      if (NAB && (NAB->getKind() == KAB->getKind()))
+        return true;
+    }
+    return false;
+  };
+
   for (auto *Node = BKGraph.begin(); Node != BKGraph.end(); Node++) {
     BoundsKey Curr =  (*Node)->getData();
     ABounds *OldABounds = BI->getBounds(Curr, BoundsPriority::FlowInferred);
     if (OldABounds) {
+      // Make sure atleast one neighbour is having same BoundsKind.
+      if (!IsSameKind(Curr, OldABounds))
+        continue;
+
       OldABounds = OldABounds->makeCopy(OldABounds->getLengthKey());
       BI->removeBounds(Curr, BoundsPriority::FlowInferred);
       ABI.inferBounds(Curr, BKGraph, false);
