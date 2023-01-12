@@ -10,9 +10,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/3C/AVarBoundsConflictResolver.h"
-#include "clang/3C/AVarBoundsInfo.h"
 #include "clang/3C/3CGlobalOptions.h"
+#include "clang/3C/AVarBoundsInfo.h"
+#include "clang/3C/AVarBoundsConflictResolver.h"
 #include "clang/3C/ConstraintResolver.h"
 #include <clang/3C/LowerBoundAssignment.h>
 #include "clang/3C/ProgramInfo.h"
@@ -446,6 +446,7 @@ bool AvarBoundsInference::predictBounds(BoundsKey K,
         ABounds::BoundsKind NeighbourKind = INB.first;
         const std::set<BoundsKey> &NeighbourSet = INB.second;
         std::set<BoundsKey> NonConstSet;
+        // Find all non-const bounds of a neighbour.
         for (auto &NK : NeighbourSet) {
           auto *NKVar = this->BI->getProgramVar(NK);
           if (NKVar != nullptr && !NKVar->isNumConstant())
@@ -496,6 +497,8 @@ bool AvarBoundsInference::predictBounds(BoundsKey K,
       }
     }
 
+    // If more than 50% of neighbour of a kind is having non-const
+    // bounds, use that insted of the InferredKBnds. 
     for (auto &MB : NonConstCount) {
       if (MB.second.first > (MB.second.second / 2))
         InferredKBnds[MB.first] = InferredKNonConstBnds[MB.first];

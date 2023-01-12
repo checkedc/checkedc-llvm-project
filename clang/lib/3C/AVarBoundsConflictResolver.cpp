@@ -19,38 +19,34 @@ void AVarBoundsConflictResolver::seedInitialWorkList(AVarBoundsInfo *BI,
   // Make sure previous inference does not interfere.
   ABI.clearInferredBounds();
 
-  // Utility to check if atleast one neighbour of a node
-  // is having same BoundsKind.
-  auto HasSameKindNeighbour = [&BI, &BKGraph](BoundsKey K, ABounds *KAB) {
-    std::set<BoundsKey> PredKeys;
-    BKGraph.getPredecessors(K, PredKeys);
-    for (auto &N : PredKeys) {
-      ABounds *NAB = BI->getBounds(N);
-      if (NAB && (NAB->getKind() == KAB->getKind()))
-        return true;
-    }
-    return false;
-  };
-
   for (auto *Node = BKGraph.begin(); Node != BKGraph.end(); Node++) {
     BoundsKey Curr =  (*Node)->getData();
     ABounds *OldABounds = BI->getBounds(Curr, BoundsPriority::FlowInferred);
     if (OldABounds) {
-      // Make sure atleast one neighbour is having same BoundsKind.
-      if (!HasSameKindNeighbour(Curr, OldABounds))
-        continue;
-
       OldABounds = OldABounds->makeCopy(OldABounds->getLengthKey());
       BI->removeBounds(Curr, BoundsPriority::FlowInferred);
       ABI.inferBounds(Curr, BKGraph, false);
       ABI.convergeInferredBounds();
       ABI.clearInferredBounds();
       ABounds *NewABounds = BI->getBounds(Curr, BoundsPriority::FlowInferred);
+      
       // If we were not able to predict new bounds, put back the old bounds.
       if (!NewABounds) {
         BI->mergeBounds(Curr, BoundsPriority::FlowInferred, OldABounds);
+        continue; 
+      }
+
+      auto *OldBoundsVar = BI->getProgramVar(OldABounds->getLengthKey());
+      auto *NewBoundsVar = BI->getProgramVar(NewABounds->getLengthKey());
+
+      // If the old bounds was non-const and new bounds is const, or
+      // vice versa, we put back the bounds and continue.
+      if ((!OldBoundsVar->isNumConstant() && NewBoundsVar->isNumConstant()) ||
+         (OldBoundsVar->isNumConstant() && !NewBoundsVar->isNumConstant())) {
+        BI->mergeBounds(Curr, BoundsPriority::FlowInferred, OldABounds);
         continue;
       }
+
       // If it has a bounds which is different from the previous one,
       // then we add the node to WorkList and to ImpossibleBounds.
       if (!NewABounds->areSame(OldABounds, BI)) {
