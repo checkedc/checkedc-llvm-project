@@ -21,7 +21,7 @@ void AVarBoundsConflictResolver::seedInitialWorkList(AVarBoundsInfo *BI,
 
   // Utility to check if atleast one neighbour of a node
   // is having same BoundsKind.
-  auto IsSameKind = [&BI, &BKGraph](BoundsKey K, ABounds *KAB) {
+  auto HasSameKindNeighbour = [&BI, &BKGraph](BoundsKey K, ABounds *KAB) {
     std::set<BoundsKey> PredKeys;
     BKGraph.getPredecessors(K, PredKeys);
     for (auto &N : PredKeys) {
@@ -37,7 +37,7 @@ void AVarBoundsConflictResolver::seedInitialWorkList(AVarBoundsInfo *BI,
     ABounds *OldABounds = BI->getBounds(Curr, BoundsPriority::FlowInferred);
     if (OldABounds) {
       // Make sure atleast one neighbour is having same BoundsKind.
-      if (!IsSameKind(Curr, OldABounds))
+      if (!HasSameKindNeighbour(Curr, OldABounds))
         continue;
 
       OldABounds = OldABounds->makeCopy(OldABounds->getLengthKey());
