@@ -798,6 +798,9 @@ SourceLocation Parser::SkipExtendedMicrosoftTypeAttributes() {
     case tok::kw___unaligned:
     case tok::kw___sptr:
     case tok::kw___uptr:
+    case tok::kw__Single:
+    case tok::kw__Array:
+    case tok::kw__Nt_array:
       EndLoc = ConsumeToken();
       break;
     default:
@@ -4138,7 +4141,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
     case tok::kw__Ptr:
     case tok::kw__Array_ptr:
-    case tok::kw__Nt_array_ptr: {
+    case tok::kw__Nt_array_ptr:
+    {
       ParseCheckedPointerSpecifiers(DS);
       // continue to keep the current token from being consumed.
       continue; 
@@ -4195,7 +4199,24 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, Loc, PrevSpec, DiagID,
                                  getLangOpts());
       break;
-
+    case tok::kw__Single: // macro for _Ptr
+    {
+      isInvalid = DS.SetTypeQual(DeclSpec::TQ_CheckedPtr, Loc, PrevSpec, DiagID,
+                                 getLangOpts());
+      break;
+    }
+    case tok::kw__Array: // macro for _Array_ptr
+    {
+      isInvalid = DS.SetTypeQual(DeclSpec::TQ_CheckedArrayPtr, Loc, PrevSpec, DiagID,
+                                 getLangOpts());
+      break;
+    }
+    case tok::kw__Nt_array: // macro for _Nt_array_ptr
+    {
+      isInvalid = DS.SetTypeQual(DeclSpec::TQ_CheckedNtArrayPtr, Loc, PrevSpec, DiagID,
+                                 getLangOpts());
+      break;
+    }
     // C++ typename-specifier:
     case tok::kw_typename:
       if (TryAnnotateTypeOrScopeToken()) {
@@ -5310,7 +5331,9 @@ bool Parser::isKnownToBeTypeSpecifier(const Token &Tok) const {
   case tok::kw__Array_ptr:
   case tok::kw__Nt_array_ptr:
   case tok::kw__Ptr:
-
+  case tok::kw__Single: //macro version of kw__Ptr
+  case tok::kw__Array: //macro version of kw__Array_ptr
+  case tok::kw__Nt_array: //macro version of kw__Nt_array_ptr
   // Checked C existential types
   case tok::kw__Exists:
   case tok::kw__Unpack:
@@ -5399,6 +5422,9 @@ bool Parser::isTypeSpecifierQualifier() {
   case tok::kw_volatile:
   case tok::kw_restrict:
   case tok::kw__Sat:
+  case tok::kw__Single: //macro version of kw__Ptr
+  case tok::kw__Array: //macro version of kw__Array_ptr
+  case tok::kw__Nt_array: //macro version of kw__Nt_array_ptr
 
     // Debugger support.
   case tok::kw___unknown_anytype:
@@ -5443,7 +5469,6 @@ bool Parser::isTypeSpecifierQualifier() {
   case tok::kw__Ptr:
   case tok::kw__Array_ptr:
   case tok::kw__Nt_array_ptr:
-
     return true;
 
   case tok::kw_private:
@@ -5572,7 +5597,9 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
   case tok::kw_volatile:
   case tok::kw_restrict:
   case tok::kw__Sat:
-
+  case tok::kw__Single:
+  case tok::kw__Array:
+  case tok::kw__Nt_array:
     // function-specifier
   case tok::kw_inline:
   case tok::kw_virtual:
@@ -5885,6 +5912,18 @@ void Parser::ParseTypeQualifierListOpt(
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, Loc, PrevSpec, DiagID,
                                  getLangOpts());
       break;
+    case tok::kw__Single:
+        isInvalid = DS.SetTypeQual(DeclSpec::TQ_CheckedPtr, Loc, PrevSpec, DiagID,
+                                   getLangOpts());
+        break;
+    case tok::kw__Array:
+        isInvalid = DS.SetTypeQual(DeclSpec::TQ_CheckedArrayPtr, Loc, PrevSpec, DiagID,
+                                   getLangOpts());
+        break;
+    case tok::kw__Nt_array:
+        isInvalid = DS.SetTypeQual(DeclSpec::TQ_CheckedNtArrayPtr, Loc, PrevSpec, DiagID,
+                                   getLangOpts());
+        break;
     case tok::kw__Atomic:
       if (!AtomicAllowed)
         goto DoneWithTypeQuals;
@@ -6163,7 +6202,10 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
       D.AddTypeInfo(DeclaratorChunk::getPointer(
                         DS.getTypeQualifiers(), Loc, DS.getConstSpecLoc(),
                         DS.getVolatileSpecLoc(), DS.getRestrictSpecLoc(),
-                        DS.getAtomicSpecLoc(), DS.getUnalignedSpecLoc()),
+                        DS.getAtomicSpecLoc(), DS.getUnalignedSpecLoc(),
+                        DS.getCheckedPtrSpecLoc(),
+                        DS.getCheckedArrayPtrSpecLoc(),
+                        DS.getCheckedNtArrayPtrSpecLoc()),
                     std::move(DS.getAttributes()), SourceLocation());
     else
       // Remember that we parsed a Block type, and remember the type-quals.
