@@ -2003,6 +2003,13 @@ QualType Sema::BuildQualifiedType(QualType T, SourceLocation Loc,
     return BuildQualifiedType(T, Loc, Split.Quals);
   }
 
+  // CVRAU (from DeclType.Ptr.TypeQuals) has up until now contained non-CVR bits
+  // for checkedc and has fulfilled its requirement of communicating checked
+  // qualifiers from parser/declspec to Type. Now we need to remove the checked
+  // bits from CVRAU, since checked qualifiers are not part of TypeQual
+  // CVR Qualifiers.
+  CVR = CVR & Qualifiers::CVRMask;
+
   Qualifiers Q = Qualifiers::fromCVRMask(CVR);
   Q.setUnaligned(CVRAU & DeclSpec::TQ_unaligned);
   return BuildQualifiedType(T, Loc, Q, DS);
