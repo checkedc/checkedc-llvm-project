@@ -1904,6 +1904,15 @@ QualType Sema::BuildQualifiedType(QualType T, SourceLocation Loc,
   if (Qs.hasRestrict()) {
     unsigned DiagID = 0;
     QualType ProblemTy;
+    if (DS != NULL) {
+      if (DS->getTypeQualifiers() & DeclSpec::TQ_CheckedPtr) {
+        T.QualifyAsCheckedPtr();
+      } else if (DS->getTypeQualifiers() & DeclSpec::TQ_CheckedArrayPtr) {
+        T.QualifyAsCheckedArrayPtr();
+      } else if (DS->getTypeQualifiers() & DeclSpec::TQ_CheckedNtArrayPtr) {
+        T.QualifyAsCheckedNtArrayPtr();
+      }
+    }
 
     if (T->isAnyPointerType() || T->isReferenceType() ||
         T->isMemberPointerType()) {
@@ -1939,6 +1948,26 @@ QualType Sema::BuildQualifiedType(QualType T, SourceLocation Loc,
                                   unsigned CVRAU, const DeclSpec *DS) {
   if (T.isNull())
     return QualType();
+
+  if (DS != NULL) {
+    if (DS->getTypeQualifiers() & DeclSpec::TQ_CheckedPtr) {
+      T.QualifyAsCheckedPtr();
+    } else if (DS->getTypeQualifiers() & DeclSpec::TQ_CheckedArrayPtr) {
+      T.QualifyAsCheckedArrayPtr();
+    } else if (DS->getTypeQualifiers() & DeclSpec::TQ_CheckedNtArrayPtr) {
+      T.QualifyAsCheckedNtArrayPtr();
+    }
+  }
+  else
+  {
+    if (CVRAU == DeclSpec::TQ_CheckedPtr) {
+      T.QualifyAsCheckedPtr();
+    } else if (CVRAU & DeclSpec::TQ_CheckedArrayPtr) {
+      T.QualifyAsCheckedArrayPtr();
+    } else if (CVRAU & DeclSpec::TQ_CheckedNtArrayPtr) {
+      T.QualifyAsCheckedNtArrayPtr();
+    }
+  }
 
   // Ignore any attempt to form a cv-qualified reference.
   if (T->isReferenceType())
