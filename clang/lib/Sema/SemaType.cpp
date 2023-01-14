@@ -1905,11 +1905,11 @@ QualType Sema::BuildQualifiedType(QualType T, SourceLocation Loc,
     unsigned DiagID = 0;
     QualType ProblemTy;
     if (DS != NULL) {
-      if (DS->getTypeQualifiers() & DeclSpec::TQ_CheckedPtr) {
+      if (DS->getTypeQualifiers() == DeclSpec::TQ_CheckedPtr) {
         T.QualifyAsCheckedPtr();
-      } else if (DS->getTypeQualifiers() & DeclSpec::TQ_CheckedArrayPtr) {
+      } else if (DS->getTypeQualifiers() == DeclSpec::TQ_CheckedArrayPtr) {
         T.QualifyAsCheckedArrayPtr();
-      } else if (DS->getTypeQualifiers() & DeclSpec::TQ_CheckedNtArrayPtr) {
+      } else if (DS->getTypeQualifiers() == DeclSpec::TQ_CheckedNtArrayPtr) {
         T.QualifyAsCheckedNtArrayPtr();
       }
     }
@@ -1950,11 +1950,11 @@ QualType Sema::BuildQualifiedType(QualType T, SourceLocation Loc,
     return QualType();
 
   if (DS != NULL) {
-    if (DS->getTypeQualifiers() & DeclSpec::TQ_CheckedPtr) {
+    if (DS->getTypeQualifiers() == DeclSpec::TQ_CheckedPtr) {
       T.QualifyAsCheckedPtr();
-    } else if (DS->getTypeQualifiers() & DeclSpec::TQ_CheckedArrayPtr) {
+    } else if (DS->getTypeQualifiers() == DeclSpec::TQ_CheckedArrayPtr) {
       T.QualifyAsCheckedArrayPtr();
-    } else if (DS->getTypeQualifiers() & DeclSpec::TQ_CheckedNtArrayPtr) {
+    } else if (DS->getTypeQualifiers() == DeclSpec::TQ_CheckedNtArrayPtr) {
       T.QualifyAsCheckedNtArrayPtr();
     }
   }
@@ -1962,9 +1962,9 @@ QualType Sema::BuildQualifiedType(QualType T, SourceLocation Loc,
   {
     if (CVRAU == DeclSpec::TQ_CheckedPtr) {
       T.QualifyAsCheckedPtr();
-    } else if (CVRAU & DeclSpec::TQ_CheckedArrayPtr) {
+    } else if (CVRAU == DeclSpec::TQ_CheckedArrayPtr) {
       T.QualifyAsCheckedArrayPtr();
-    } else if (CVRAU & DeclSpec::TQ_CheckedNtArrayPtr) {
+    } else if (CVRAU == DeclSpec::TQ_CheckedNtArrayPtr) {
       T.QualifyAsCheckedNtArrayPtr();
     }
   }
@@ -2003,7 +2003,6 @@ QualType Sema::BuildQualifiedType(QualType T, SourceLocation Loc,
     return BuildQualifiedType(T, Loc, Split.Quals);
   }
 
-  CVR = CVR & Qualifiers::CVRMask;
   Qualifiers Q = Qualifiers::fromCVRMask(CVR);
   Q.setUnaligned(CVRAU & DeclSpec::TQ_unaligned);
   return BuildQualifiedType(T, Loc, Q, DS);
