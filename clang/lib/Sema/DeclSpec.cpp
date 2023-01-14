@@ -1225,11 +1225,12 @@ void DeclSpec::Finish(Sema &S, const PrintingPolicy &Policy) {
        getTypeSpecSign() != TypeSpecifierSign::Unspecified ||
        TypeAltiVecVector || TypeAltiVecPixel || TypeAltiVecBool ||
        TypeQualifiers)) {
-    const unsigned NumLocs = 9;
+    const unsigned NumLocs = 12;
     SourceLocation ExtraLocs[NumLocs] = {
         TSWRange.getBegin(), TSCLoc,       TSSLoc,
         AltiVecLoc,          TQ_constLoc,  TQ_restrictLoc,
-        TQ_volatileLoc,      TQ_atomicLoc, TQ_unalignedLoc};
+        TQ_volatileLoc,      TQ_atomicLoc, TQ_unalignedLoc,
+          TQ_CheckedPtrLoc, TQ_CheckedArrayPtrLoc, TQ_CheckedNtArrayPtrLoc};
     FixItHint Hints[NumLocs];
     SourceLocation FirstLoc;
     for (unsigned I = 0; I != NumLocs; ++I) {

@@ -1899,16 +1899,6 @@ QualType Sema::BuildQualifiedType(QualType T, SourceLocation Loc,
     Qs.removeVolatile();
   }
 
-  if (DS != NULL) {
-    if (DS->getTypeQualifiers() == DeclSpec::TQ_CheckedPtr) {
-      T.QualifyAsCheckedPtr();
-    } else if (DS->getTypeQualifiers() == DeclSpec::TQ_CheckedArrayPtr) {
-      T.QualifyAsCheckedArrayPtr();
-    } else if (DS->getTypeQualifiers() == DeclSpec::TQ_CheckedNtArrayPtr) {
-      T.QualifyAsCheckedNtArrayPtr();
-    }
-  }
-
   // Enforce C99 6.7.3p2: "Types other than pointer types derived from
   // object or incomplete types shall not be restrict-qualified."
   if (Qs.hasRestrict()) {
@@ -1950,34 +1940,18 @@ QualType Sema::BuildQualifiedType(QualType T, SourceLocation Loc,
   if (T.isNull())
     return QualType();
 
-  if (DS != NULL) {
-    if (DS->getTypeQualifiers() == DeclSpec::TQ_CheckedPtr) {
-      T.QualifyAsCheckedPtr();
-    } else if (DS->getTypeQualifiers() == DeclSpec::TQ_CheckedArrayPtr) {
-      T.QualifyAsCheckedArrayPtr();
-    } else if (DS->getTypeQualifiers() == DeclSpec::TQ_CheckedNtArrayPtr) {
-      T.QualifyAsCheckedNtArrayPtr();
-    }
-  }
-  else
-  {
-    if (CVRAU == DeclSpec::TQ_CheckedPtr) {
-      T.QualifyAsCheckedPtr();
-    } else if (CVRAU == DeclSpec::TQ_CheckedArrayPtr) {
-      T.QualifyAsCheckedArrayPtr();
-    } else if (CVRAU == DeclSpec::TQ_CheckedNtArrayPtr) {
-      T.QualifyAsCheckedNtArrayPtr();
-    }
-  }
-
   // Ignore any attempt to form a cv-qualified reference.
   if (T->isReferenceType())
     CVRAU &=
         ~(DeclSpec::TQ_const | DeclSpec::TQ_volatile | DeclSpec::TQ_atomic);
 
   // Convert from DeclSpec::TQ to Qualifiers::TQ by just dropping TQ_atomic and
-  // TQ_unaligned;
-  unsigned CVR = CVRAU & ~(DeclSpec::TQ_atomic | DeclSpec::TQ_unaligned);
+  // TQ_unaligned and the checked qualifiers;
+  unsigned CVR = CVRAU & ~(DeclSpec::TQ_atomic |
+                           DeclSpec::TQ_unaligned | DeclSpec::TQ_CheckedPtr |
+                                DeclSpec::TQ_CheckedArrayPtr |
+                                DeclSpec::TQ_CheckedNtArrayPtr|
+                                DeclSpec::TQ_Unchecked);
 
   // C11 6.7.3/5:
   //   If the same qualifier appears more than once in the same
@@ -2003,13 +1977,6 @@ QualType Sema::BuildQualifiedType(QualType T, SourceLocation Loc,
     Split.Quals.addCVRQualifiers(CVR);
     return BuildQualifiedType(T, Loc, Split.Quals);
   }
-
-  // CVRAU (from DeclType.Ptr.TypeQuals) has up until now contained non-CVR bits
-  // for checkedc and has fulfilled its requirement of communicating checked
-  // qualifiers from parser/declspec to Type. Now we need to remove the checked
-  // bits from CVRAU, since checked qualifiers are not part of TypeQual
-  // CVR Qualifiers.
-  CVR = CVR & Qualifiers::CVRMask;
 
   Qualifiers Q = Qualifiers::fromCVRMask(CVR);
   Q.setUnaligned(CVRAU & DeclSpec::TQ_unaligned);
@@ -3176,7 +3143,10 @@ void Sema::diagnoseIgnoredQualifiers(unsigned DiagID, unsigned Quals,
                                      SourceLocation VolatileQualLoc,
                                      SourceLocation RestrictQualLoc,
                                      SourceLocation AtomicQualLoc,
-                                     SourceLocation UnalignedQualLoc) {
+                                     SourceLocation UnalignedQualLoc,
+                                     SourceLocation CheckedPtrLoc,
+                                     SourceLocation CheckedArrayLoc,
+                                     SourceLocation CheckedNtArrayLoc) {
   if (!Quals)
     return;
 
@@ -3184,12 +3154,15 @@ void Sema::diagnoseIgnoredQualifiers(unsigned DiagID, unsigned Quals,
     const char *Name;
     unsigned Mask;
     SourceLocation Loc;
-  } const QualKinds[5] = {
+  } const QualKinds[8] = {
     { "const", DeclSpec::TQ_const, ConstQualLoc },
     { "volatile", DeclSpec::TQ_volatile, VolatileQualLoc },
     { "restrict", DeclSpec::TQ_restrict, RestrictQualLoc },
     { "__unaligned", DeclSpec::TQ_unaligned, UnalignedQualLoc },
-    { "_Atomic", DeclSpec::TQ_atomic, AtomicQualLoc }
+    { "_Atomic", DeclSpec::TQ_atomic, AtomicQualLoc },
+    { "_Single", DeclSpec::TQ_CheckedPtr, CheckedPtrLoc },
+    { "_Array", DeclSpec::TQ_CheckedArrayPtr, CheckedArrayLoc },
+    { "_Nt_array", DeclSpec::TQ_CheckedNtArrayPtr, CheckedNtArrayLoc }
   };
 
   SmallString<32> QualStr;
@@ -5002,9 +4975,27 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         }
       }
 
-      T = S.BuildPointerType(T, CheckedPointerKind::Unchecked, DeclType.Loc, Name);
       if (DeclType.Ptr.TypeQuals)
-        T = S.BuildQualifiedType(T, DeclType.Loc, DeclType.Ptr.TypeQuals);
+      {
+        auto CVRAU = DeclType.Ptr.TypeQuals;
+        auto CheckedPointerKind = CheckedPointerKind::Unchecked;
+        TypeSpecifierType TS = TypeSpecifierType::TST_arrayPtr;
+        //With checked'c macro support, DeclQualifiers control the pointer type.
+        // Hence we build it up here
+        if (CVRAU == DeclSpec::TQ_CheckedPtr) {
+          CheckedPointerKind = CheckedPointerKind::Ptr;
+        } else if (CVRAU == DeclSpec::TQ_CheckedArrayPtr) {
+          CheckedPointerKind = CheckedPointerKind::Array;
+        } else if (CVRAU == DeclSpec::TQ_CheckedNtArrayPtr) {
+          CheckedPointerKind = CheckedPointerKind::NtArray;
+        }
+        T = S.BuildPointerType(T, CheckedPointerKind, DeclType.Loc, Name);
+        T = S.BuildQualifiedType(T, DeclType.Loc, CVRAU);
+      }
+      else
+      {
+        T = S.BuildPointerType(T, CheckedPointerKind::Unchecked, DeclType.Loc, Name);
+      }
       break;
     case DeclaratorChunk::Reference: {
       // Verify that we're not building a reference to pointer to function with

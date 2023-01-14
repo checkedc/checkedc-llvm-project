@@ -619,6 +619,13 @@ public:
     TQ_CheckedNtArrayPtrLoc = SourceLocation();
   }
 
+  void ClearCheckedTypeQualifiers(){
+    TypeQualifiers = TypeQualifiers & ~(
+        TQ_CheckedPtr | TQ_CheckedArrayPtr | TQ_CheckedNtArrayPtr);
+    TQ_CheckedPtrLoc = SourceLocation();
+    TQ_CheckedArrayPtrLoc = SourceLocation();
+    TQ_CheckedNtArrayPtrLoc = SourceLocation();
+  }
   // function-specifier
   bool isInlineSpecified() const {
     return FS_inline_specified | FS_forceinline_specified;
