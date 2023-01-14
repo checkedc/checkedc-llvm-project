@@ -2003,6 +2003,7 @@ QualType Sema::BuildQualifiedType(QualType T, SourceLocation Loc,
     return BuildQualifiedType(T, Loc, Split.Quals);
   }
 
+  CVR = CVR & Qualifiers::CVRMask;
   Qualifiers Q = Qualifiers::fromCVRMask(CVR);
   Q.setUnaligned(CVRAU & DeclSpec::TQ_unaligned);
   return BuildQualifiedType(T, Loc, Q, DS);

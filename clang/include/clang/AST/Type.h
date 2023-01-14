@@ -1286,6 +1286,14 @@ public:
   /// Remove all qualifiers including _Atomic.
   QualType getAtomicUnqualifiedType() const;
 
+  bool isCheckedPointerPtrType() const;
+  bool isCheckedPointerNtArrayType() const;
+  bool isExactlyCheckedPointerArrayType() const;
+  bool isCheckedPointerArrayType() const;
+  bool isCheckedQualified() const;
+  bool isCheckedPointerType() const;
+  bool isUncheckedPointerType() const;
+
 private:
   // These methods are implemented in a separate translation unit;
   // "static"-ize them to avoid creating temporary QualTypes in the
