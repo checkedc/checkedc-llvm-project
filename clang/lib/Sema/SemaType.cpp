@@ -1899,20 +1899,21 @@ QualType Sema::BuildQualifiedType(QualType T, SourceLocation Loc,
     Qs.removeVolatile();
   }
 
+  if (DS != NULL) {
+    if (DS->getTypeQualifiers() == DeclSpec::TQ_CheckedPtr) {
+      T.QualifyAsCheckedPtr();
+    } else if (DS->getTypeQualifiers() == DeclSpec::TQ_CheckedArrayPtr) {
+      T.QualifyAsCheckedArrayPtr();
+    } else if (DS->getTypeQualifiers() == DeclSpec::TQ_CheckedNtArrayPtr) {
+      T.QualifyAsCheckedNtArrayPtr();
+    }
+  }
+
   // Enforce C99 6.7.3p2: "Types other than pointer types derived from
   // object or incomplete types shall not be restrict-qualified."
   if (Qs.hasRestrict()) {
     unsigned DiagID = 0;
     QualType ProblemTy;
-    if (DS != NULL) {
-      if (DS->getTypeQualifiers() == DeclSpec::TQ_CheckedPtr) {
-        T.QualifyAsCheckedPtr();
-      } else if (DS->getTypeQualifiers() == DeclSpec::TQ_CheckedArrayPtr) {
-        T.QualifyAsCheckedArrayPtr();
-      } else if (DS->getTypeQualifiers() == DeclSpec::TQ_CheckedNtArrayPtr) {
-        T.QualifyAsCheckedNtArrayPtr();
-      }
-    }
 
     if (T->isAnyPointerType() || T->isReferenceType() ||
         T->isMemberPointerType()) {
