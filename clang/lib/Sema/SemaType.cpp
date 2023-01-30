@@ -1950,8 +1950,7 @@ QualType Sema::BuildQualifiedType(QualType T, SourceLocation Loc,
   unsigned CVR = CVRAU & ~(DeclSpec::TQ_atomic |
                            DeclSpec::TQ_unaligned | DeclSpec::TQ_CheckedPtr |
                                 DeclSpec::TQ_CheckedArrayPtr |
-                                DeclSpec::TQ_CheckedNtArrayPtr|
-                                DeclSpec::TQ_Unchecked);
+                                DeclSpec::TQ_CheckedNtArrayPtr);
 
   // C11 6.7.3/5:
   //   If the same qualifier appears more than once in the same
