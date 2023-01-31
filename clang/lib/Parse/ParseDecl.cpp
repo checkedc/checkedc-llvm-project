@@ -2032,8 +2032,11 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
           // It is easy to misplace it.  Handle the case where the return bounds
           // expression is misplaced for a complex function declarator.
           // Diagnosis this, suggest a fix, and bail out.
-          if (Tok.is(tok::colon)) {
-            Token Next = NextToken();
+          if (Tok.is(tok::colon) || isMacroCheckedCKeyword(Tok.getKind())) {
+            Token Next = Tok;
+            if (Next.is(tok::colon))
+              Next = NextToken();
+
             if (StartsBoundsExpression(Next) ||
                 StartsInteropTypeAnnotation(Next)) {
               Diag(Tok.getLocation(),
@@ -2400,6 +2403,15 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(
       ConsumeToken();
 
       if (ParseBoundsAnnotations(D, BoundsColonLoc, Annots)) {
+        SkipUntil(tok::comma, tok::equal, StopAtSemi | StopBeforeMatch);
+        ThisVarDecl->setInvalidDecl();
+      }
+    }
+    else if (Tok.is(tok::kw__Bounds) || Tok.is(tok::kw__Any) ||
+             Tok.is(tok::kw__Byte_count) || Tok.is(tok::kw__Count))
+    {
+      // parse the bounds annotations
+      if (ParseBoundsAnnotations(D, Tok.getLocation(), Annots)) {
         SkipUntil(tok::comma, tok::equal, StopAtSemi | StopBeforeMatch);
         ThisVarDecl->setInvalidDecl();
       }
@@ -4445,7 +4457,8 @@ void Parser::ParseStructDeclaration(
     // The bounds expression must be parsed in a deferred fashion because it
     // can refer to members declared after this member.
     SourceLocation Loc = Tok.getLocation();
-    if (TryConsumeToken(tok::colon)) {
+    if (TryConsumeToken(tok::colon)||
+        isMacroCheckedCKeyword(Tok.getKind())) {
       if (getLangOpts().CheckedC && (StartsBoundsExpression(Tok) ||
           StartsInteropTypeAnnotation(Tok))) {
         BoundsAnnotations BA;
@@ -7074,12 +7087,18 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
   // Return bounds expressions are delay parsed because they can refer to _Return_value,
   // which uses the return type.  The return type is still unknown at this point.
   std::unique_ptr<CachedTokens> DeferredBoundsToks = nullptr;
-  if (getLangOpts().CheckedC && Tok.is(tok::colon)) {
-    const Token &NextTok = GetLookAheadToken(1);
+  if (getLangOpts().CheckedC && (Tok.is(tok::colon)
+                                 || isMacroCheckedCKeyword(Tok.getKind()))) {
+    Token NextTok = Tok;
+    if (Tok.is(tok::colon)) {
+      NextTok = GetLookAheadToken(1);
+    }
+
     if (StartsBoundsExpression(NextTok) ||
       StartsInteropTypeAnnotation(NextTok)) {
       BoundsColonLoc = Tok.getLocation();
-      ConsumeToken();
+      if (Tok.is(tok::colon))
+        ConsumeToken();
       Actions.SetDeferredBoundsCallBack(this, ParseBoundsCallback);
       std::unique_ptr<CachedTokens> AllocToks { new CachedTokens };
       DeferredBoundsToks = std::move(AllocToks);
@@ -7378,7 +7397,8 @@ void Parser::ParseParameterDeclarationClause(
       // the identifier should be null.
       if (!ParmDeclarator.isInvalidType() && !ParmDeclarator.hasName()) {
         if (Tok.getIdentifierInfo() &&
-            Tok.getIdentifierInfo()->isKeyword(getLangOpts())) {
+            Tok.getIdentifierInfo()->isKeyword(getLangOpts())
+            && !isMacroCheckedCKeyword(Tok.getKind())) {
           Diag(Tok, diag::err_keyword_as_parameter) << PP.getSpelling(Tok);
           // Consume the keyword.
           ConsumeToken();
@@ -7390,13 +7410,16 @@ void Parser::ParseParameterDeclarationClause(
       // Handle Checked C where clause, bounds expression or bounds-safe
       // interface type annotation.
       if (getLangOpts().CheckedC) {
-        if (!Tok.isOneOf(tok::colon, tok::kw__Where))
+        if (!Tok.isOneOf(tok::colon, tok::kw__Where) &&
+            !isMacroCheckedCKeyword(Tok.getKind()))
 	  // There is no bounds expression, type annotation or where clause.
 	  // Set the default bounds expression, if any.
           Actions.ActOnEmptyBoundsDecl(Param);
         else {
           SourceLocation BoundsColonLoc = Tok.getLocation();
-          if (!StartsWhereClause(Tok))
+          auto BoundsTokKind = Tok.getKind();
+          if (!StartsWhereClause(Tok) &&
+              !isMacroCheckedCKeyword(Tok.getKind()))
             ConsumeToken();
           BoundsAnnotations Annots;
           // Bounds expressions are delay parsed because they can refer to

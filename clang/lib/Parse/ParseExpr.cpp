@@ -3488,7 +3488,9 @@ bool Parser::StartsBoundsExpression(const Token &T) {
     IdentifierInfo *Ident = T.getIdentifierInfo();
     return (Ident == Ident_byte_count || Ident == Ident_count ||
             Ident == Ident_bounds);
-  }
+  }else if (T.getKind() == tok::kw__Count || T.getKind() == tok::kw__Byte_count ||
+            T.getKind() == tok::kw__Bounds)
+    return true;
   return false;
 }
 
@@ -3680,10 +3682,17 @@ void Parser::SkipInvalidBoundsExpr(SourceLocation CurrentLoc) {
     Paren.skipToEnd();
   }
 }
+//write a definition for the function isMacroCheckedCKeyword
+bool Parser::isMacroCheckedCKeyword(tok::TokenKind Kind){
+  if (Kind == tok::kw__Count || Kind == tok::kw__Bounds ||
+      Kind == tok::kw__Byte_count)
+    return true;
+  return false;
+}
 
 ExprResult Parser::ParseBoundsExpression() {
   tok::TokenKind TokKind = Tok.getKind();
-  if (TokKind != tok::identifier) {
+  if (TokKind != tok::identifier && !isMacroCheckedCKeyword(TokKind)) {
     // This can't be a contextual keyword that begins a bounds expression,
     // so stop now.
     Diag(Tok, diag::err_expected_bounds_expr);
@@ -3691,6 +3700,7 @@ ExprResult Parser::ParseBoundsExpression() {
   }
 
   IdentifierInfo *Ident = Tok.getIdentifierInfo();
+  auto BoundsToken = Tok.getKind();
   SourceLocation BoundsKWLoc = Tok.getLocation();
   ConsumeToken();
 
@@ -3701,10 +3711,12 @@ ExprResult Parser::ParseBoundsExpression() {
     return ExprError();
 
   ExprResult Result;
-  if (Ident == Ident_byte_count || Ident == Ident_count) {
+  if (Ident == Ident_byte_count || Ident == Ident_count
+      || BoundsToken == tok::kw__Byte_count || BoundsToken == tok::kw__Count) {
     // Parse byte_count(e1) or count(e1)
     Result = Actions.CorrectDelayedTyposInExpr(ParseAssignmentExpression());
-    BoundsExpr::Kind CountKind = Ident == Ident_count ?
+    BoundsExpr::Kind CountKind = (Ident == Ident_count
+                                  || BoundsToken == tok::kw__Count) ?
       BoundsExpr::Kind::ElementCount : BoundsExpr::Kind::ByteCount;
     if (Result.isInvalid())
       Result = ExprError();
@@ -3712,7 +3724,7 @@ ExprResult Parser::ParseBoundsExpression() {
       Result = Actions.ActOnCountBoundsExpr(BoundsKWLoc, CountKind,
                                             Result.get(),
                                            Tok.getLocation());
-  } else if (Ident == Ident_bounds) {
+  } else if (Ident == Ident_bounds || BoundsToken == tok::kw__Bounds) {
     // Parse bounds(unknown) or bounds(e1, e2)
     bool FoundNullaryOperator = false;
 
@@ -3829,6 +3841,7 @@ ExprResult Parser::ParseGenericFunctionApplication(ExprResult Res, SourceLocatio
 bool Parser::ParseRelativeBoundsClauseForDecl(ExprResult &Expr) {
   bool isError = false;
   IdentifierInfo *Ident = Tok.getIdentifierInfo();
+  auto BoundsTokenKeyword = Tok.getKind();
   SourceLocation BoundsKWLoc = Tok.getLocation();
   RangeBoundsExpr *Range = nullptr;
   Token TempTok = Tok;
