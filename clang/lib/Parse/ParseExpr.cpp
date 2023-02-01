@@ -3532,7 +3532,8 @@ bool Parser::StartsRelativeBoundsClause(Token &T) {
 }
 
 bool Parser::StartsWhereClause(const Token &T) {
-  return getLangOpts().CheckedC && T.is(tok::kw__Where);
+  return getLangOpts().CheckedC && (T.is(tok::kw__Where)
+            || T.is(tok::kw__Where_M));
 }
 
 ExprResult Parser::ParseInteropTypeAnnotation(const Declarator &D, bool IsReturn) {
@@ -3706,7 +3707,8 @@ void Parser::SkipInvalidBoundsExpr(SourceLocation CurrentLoc) {
 //write a definition for the function isMacroCheckedCKeyword
 bool Parser::isMacroCheckedCKeyword(tok::TokenKind Kind){
   if (Kind == tok::kw__Count || Kind == tok::kw__Bounds ||
-      Kind == tok::kw__Byte_count || Kind == tok::kw__Itype)
+      Kind == tok::kw__Byte_count || Kind == tok::kw__Itype ||
+      Kind == tok::kw__Where_M)
     return true;
   return false;
 }
@@ -4071,7 +4073,9 @@ bool Parser::ConsumeAndStoreWhereClause(CachedTokens &Toks) {
 
   // Consume and store _Where.
   Toks.push_back(Tok);
-  ConsumeToken();
+  tok::TokenKind WhereTok = Tok.getKind();
+  if (WhereTok == tok::kw__Where)
+    ConsumeToken();
 
   do {
     if (Tok.is(tok::identifier) && NextToken().is(tok::colon)) {
@@ -4181,14 +4185,20 @@ Parser::DeferredParseBoundsAnnotations(std::unique_ptr<CachedTokens> Toks,
 
   // There could be leftover tokens because of an error.
   // Skip through them until we reach the eof token.
-  if (Tok.isNot(tok::eof)) {
+  if (Tok.isNot(tok::eof) && Tok.isNot(tok::r_paren)) {
+    //r_paren because, now macro bounds can be placed within parenthesis
     assert(Error);
     while (Tok.isNot(tok::eof))
       ConsumeAnyToken();
   }
 
+  //Clean up r_paren token if it is leftover
+  if (Tok.is(tok::r_paren))
+    ConsumeAnyToken();
   // Clean up the remaining EOF token.
-  if (Tok.is(tok::eof) && Tok.getLocation() == OrigLoc)
+
+  if (Tok.is(tok::eof)
+      && Tok.getLocation() == OrigLoc)
     ConsumeAnyToken();
 
   return Error;

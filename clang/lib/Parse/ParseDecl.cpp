@@ -1945,8 +1945,12 @@ bool Parser::ParseWhereClauseOnDecl(Decl *D) {
     Diag(Tok, diag::err_invalid_decl_where_clause);
     return false;
   }
+  WhereClause *WClause;
+  if (Tok.getKind() == tok::kw__Where_M)
+    WClause = ParseMacroWhereClause();
+  else
+    WClause = ParseWhereClause();
 
-  WhereClause *WClause = ParseWhereClause();
   if (!WClause)
     return false;
 
@@ -2156,6 +2160,13 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
   // If we don't have a comma, it is either the end of the list (a ';') or an
   // error, bail out.
   SourceLocation CommaLoc;
+  //if you are here with ')' , then it means you where probably parsing
+  // a _Where_M(exp), --> So maybe its after all not an error.
+  //Try consuming the ')' and see if you have a comma.
+  if (Tok.is(tok::r_paren)){
+    ConsumeToken();
+  }
+
   while (TryConsumeToken(tok::comma, CommaLoc)) {
     if (Tok.isAtStartOfLine() && ExpectSemi && !MightBeDeclarator(Context)) {
       // This comma was followed by a line-break and something which can't be
