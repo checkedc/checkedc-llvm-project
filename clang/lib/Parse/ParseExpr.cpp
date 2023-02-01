@@ -2256,6 +2256,24 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
 
       break;
     }
+    case tok::kw__TyArgs: {
+      if (!getLangOpts().CheckedC)
+        return LHS;
+
+      // Look for the start of a generic type argument list:
+      // '(' type name  ... , type name n ')'
+      bool IsAmbiguous;
+      Token LastToken = Tok;
+      ConsumeToken(); // Consume the _TyArgs token
+      // Consume the '(' token
+      SourceLocation Loc = ConsumeAnyToken();
+      // Consume the '(' token
+      LHS = ParseGenericMacroFunctionApplication(LHS, Loc);
+      if (LHS.isInvalid())
+        LHS = ExprError();
+
+      break;
+    }
     }
   }
 }
@@ -3499,6 +3517,9 @@ bool Parser::StartsInteropTypeAnnotation(const Token &T) {
     IdentifierInfo *Ident = T.getIdentifierInfo();
     return (Ident == Ident_itype);
   }
+  else if (T.getKind() == tok::kw__Itype)
+    return true;
+
   return false;
 }
 
@@ -3685,7 +3706,7 @@ void Parser::SkipInvalidBoundsExpr(SourceLocation CurrentLoc) {
 //write a definition for the function isMacroCheckedCKeyword
 bool Parser::isMacroCheckedCKeyword(tok::TokenKind Kind){
   if (Kind == tok::kw__Count || Kind == tok::kw__Bounds ||
-      Kind == tok::kw__Byte_count)
+      Kind == tok::kw__Byte_count || Kind == tok::kw__Itype)
     return true;
   return false;
 }
@@ -3827,6 +3848,51 @@ std::pair<bool, Parser::TypeArgVector> Parser::ParseGenericTypeArgumentList(Sour
   return std::make_pair(false, typeArgumentInfos);
 }
 
+// Parse a generic type argument list of the form type_name_1, ..., type_name_n ')'.
+// Notice the initial '(' must have already been parsed.
+// This is re-used for both generic functions and generic structs.
+// Return false if parsing succeeds, in which case the 'typeArgs' is also populated.
+// Return true if parsing fails.
+std::pair<bool, Parser::TypeArgVector>
+    Parser::ParseGenericMacroTypeArgumentList(SourceLocation Loc) {
+  Parser::TypeArgVector typeArgumentInfos;
+  auto err = std::make_pair<>(true, Parser::TypeArgVector());
+  auto firstTypeArgument = true;
+  // Expect to see a list of type names, followed by a ')'.
+  while (Tok.getKind() != tok::r_paren) {
+    if (!firstTypeArgument) {
+      if (ExpectAndConsume(tok::comma,
+                           diag::err_type_function_comma_or_greater_expected)) {
+        // We want to consume greater, but not consume semi
+        SkipUntil(tok::r_paren, StopAtSemi | StopBeforeMatch);
+        if (Tok.getKind() == tok::r_paren) ConsumeAnyToken();
+        return err;
+      }
+    } else
+      firstTypeArgument = false;
+
+    // Expect to see type name.
+    TypeResult Ty = ParseTypeName(nullptr /*Range*/,
+                                  DeclaratorContext::TypeName, AS_none,
+                                  nullptr /*OwnedType*/,
+                                  nullptr /*Attrs*/);
+    if (Ty.isInvalid()) {
+      // We do not need to write an error message since ParseTypeName does.
+      // We want to consume greater, but not consume semi
+      SkipUntil(tok::r_paren, StopAtSemi | StopBeforeMatch);
+      if (Tok.getKind() == tok::r_paren) ConsumeAnyToken();
+      return err;
+    }
+
+    TypeSourceInfo *TInfo;
+    QualType realType = Actions.GetTypeFromParser(Ty.get(), &TInfo);
+    typeArgumentInfos.push_back({ realType, TInfo });
+  }
+  ConsumeAnyToken(); // consume ')' token
+
+  return std::make_pair(false, typeArgumentInfos);
+}
+
 // Parse a generic type argument list for a function application.  The suffix of postfix expression can
 // have the form type_name_1, ... type_name_n '>' (notice the initial '<' must have already been parsed),
 // in which case it is a generic type argument list.
@@ -3834,6 +3900,17 @@ std::pair<bool, Parser::TypeArgVector> Parser::ParseGenericTypeArgumentList(Sour
 // Returns false if parsing succeeded and true if an error occurred.
 ExprResult Parser::ParseGenericFunctionApplication(ExprResult Res, SourceLocation Loc) {
   auto ArgRes = ParseGenericTypeArgumentList(Loc);
+  if (ArgRes.first) return ExprError();
+  return Actions.ActOnFunctionTypeApplication(Res, Loc, ArrayRef<TypeArgument>(ArgRes.second));
+}
+
+// Parse a generic type argument list for a function application.  The suffix of postfix expression can
+// have the form type_name_1, ... type_name_n ')' (notice the initial '(' must have already been parsed),
+// in which case it is a generic type argument list.
+//
+// Returns false if parsing succeeded and true if an error occurred.
+ExprResult Parser::ParseGenericMacroFunctionApplication(ExprResult Res, SourceLocation Loc) {
+  auto ArgRes = ParseGenericMacroTypeArgumentList(Loc);
   if (ArgRes.first) return ExprError();
   return Actions.ActOnFunctionTypeApplication(Res, Loc, ArrayRef<TypeArgument>(ArgRes.second));
 }

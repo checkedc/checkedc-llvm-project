@@ -2408,7 +2408,8 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(
       }
     }
     else if (Tok.is(tok::kw__Bounds) || Tok.is(tok::kw__Any) ||
-             Tok.is(tok::kw__Byte_count) || Tok.is(tok::kw__Count))
+             Tok.is(tok::kw__Byte_count) || Tok.is(tok::kw__Count) ||
+             Tok.is(tok::kw__Itype))
     {
       // parse the bounds annotations
       if (ParseBoundsAnnotations(D, Tok.getLocation(), Annots)) {
