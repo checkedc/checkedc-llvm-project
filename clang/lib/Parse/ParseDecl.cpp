@@ -1945,8 +1945,12 @@ bool Parser::ParseWhereClauseOnDecl(Decl *D) {
     Diag(Tok, diag::err_invalid_decl_where_clause);
     return false;
   }
+  WhereClause *WClause;
+  if (Tok.getKind() == tok::kw__Where_M)
+    WClause = ParseMacroWhereClause();
+  else
+    WClause = ParseWhereClause();
 
-  WhereClause *WClause = ParseWhereClause();
   if (!WClause)
     return false;
 
