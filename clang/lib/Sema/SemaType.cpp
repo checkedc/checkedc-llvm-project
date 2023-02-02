@@ -4978,7 +4978,6 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       {
         auto CVRAU = DeclType.Ptr.TypeQuals;
         auto CheckedPointerKind = CheckedPointerKind::Unchecked;
-        TypeSpecifierType TS = TypeSpecifierType::TST_arrayPtr;
         //With checked'c macro support, DeclQualifiers control the pointer type.
         // Hence we build it up here
         if (CVRAU == DeclSpec::TQ_CheckedPtr) {
@@ -4993,7 +4992,8 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       }
       else
       {
-        T = S.BuildPointerType(T, CheckedPointerKind::Unchecked, DeclType.Loc, Name);
+        T = S.BuildPointerType(T, CheckedPointerKind::Unchecked,
+                               DeclType.Loc, Name);
       }
       break;
     case DeclaratorChunk::Reference: {
