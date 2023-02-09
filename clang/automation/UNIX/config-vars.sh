@@ -73,11 +73,11 @@ export LLVM_OBJ_DIR="${BUILD_BINARIESDIRECTORY}/LLVM-${BUILDCONFIGURATION}-${BUI
 # Validate Test Suite configuration
 
 if [ -z "$TEST_SUITE" ]; then
-  echo "TEST_SUITE not set: must be set to one of CheckedC, CheckedC_clang, or CheckedC_LLVM"
+  echo "TEST_SUITE not set: must be set to one of CheckedC_tests, CheckedC, CheckedC_clang, or CheckedC_LLVM"
   CHECKEDC_CONFIG_STATUS="error" 
 elif [ "$TEST_SUITE" != "CheckedC" -a "$TEST_SUITE" != "CheckedC_clang" -a \
-       "$TEST_SUITE" != "CheckedC_LLVM" ]; then
-  echo "Unknown TEST_SUITE value $TEST_SUITE: must be one of CheckedC, CheckedC_clang, or CheckedC_LLVM"
+       "$TEST_SUITE" != "CheckedC_LLVM" -a "$TEST_SUITE" != "CheckedC_tests"]; then
+  echo "Unknown TEST_SUITE value $TEST_SUITE: must be one of CheckedC_tests, CheckedC, CheckedC_clang, or CheckedC_LLVM"
   CHECKEDC_CONFIG_STATUS="error" 
 fi
 

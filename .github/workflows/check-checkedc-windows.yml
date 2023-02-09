@@ -1,0 +1,65 @@
+name: Checked C Clang CI [WIN/check-checkedc]
+
+on:
+  push:
+    branches:
+      - 'main'
+    pull_request:
+     # branches:
+      #  - 'main'
+       # - 'master'
+env:
+  builddir: "${{github.workspace}}/b/ninja"
+  BUILDCONFIGURATION: "Release"
+  BUILD_BINARIESDIRECTORY: "${{github.workspace}}/b"
+  BUILD_SOURCESDIRECTORY: "${{github.workspace}}"
+  TEST_TARGET_ARCH: "X86_64"
+  RUN_LOCAL:  "no"
+  TEST_SUITE: "CheckedC_clang"
+jobs:
+  # Cleanup files left behind by prior runs
+  clean:
+    name: Clean
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clean
+        run: |
+          rm -rf ${{env.builddir}}
+          mkdir -p ${{env.builddir}}
+          rm -rf ${{env.BUILD_BINARIESDIRECTORY}}
+          mkdir -p ${{env.BUILD_BINARIESDIRECTORY}}
+          rm -rf ${{env.BUILD_SOURCESDIRECTORY}}
+          mkdir -p ${{env.BUILD_SOURCESDIRECTORY}}
+
+  test_CheckedC_tests_UNIX:
+    name: Build Checked C clang and test only checkedc tests on UNIX
+    needs: clean
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Checked C Clang code
+        uses: actions/checkout@v2
+        with:
+          path: ${{env.BUILD_SOURCESDIRECTORY}}
+      - name: Run setup-and-test.sh script
+        env:
+          TEST_SUITE: "CheckedC_tests"
+        run: |
+         cd ${{env.BUILD_SOURCESDIRECTORY}}/clang/automation/UNIX/
+         ./build-and-test.sh
+
+  test_CheckedC_tests_Windows:
+    name: Build Checked C clang and test only checkedc tests on windows
+    needs: clean
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Checked C Clang code
+        uses: actions/checkout@v2
+        with:
+          path: ${{env.BUILD_SOURCESDIRECTORY}}
+      - name: Run setup-and-test.sh script
+        env:
+          TEST_SUITE: "CheckedC_tests"
+          TEST_TARGET_ARCH: "X86"
+        run: |
+          cd ${{env.BUILD_SOURCESDIRECTORY}}\clang\automation\Windows
+          build-and-test.bat
