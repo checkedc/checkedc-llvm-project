@@ -2,8 +2,8 @@ name: Checked C Clang and LLVM CI [UNIX/check-all]
 
 on:
   push:
-    branches:
-      - 'main'
+  #  branches:
+  #    - 'main'
   pull_request:
   #      branches:
    #         - 'main'
