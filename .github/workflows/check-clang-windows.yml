@@ -45,6 +45,7 @@ jobs:
         env:
           TEST_SUITE: "CheckedC_clang"
           TEST_TARGET_ARCH: "X86"
+          CLANG_BRANCH: "bounds_macro"
         shell: cmd
         run: |
          cd ${{env.BUILD_SOURCESDIRECTORY}}\clang\automation\Windows

@@ -146,25 +146,25 @@ if NOT DEFINED SKIP_CHECKEDC_TESTS (
 
 rem set up branch names
 if not defined CHECKEDC_BRANCH (
-  set CHECKEDC_BRANCH=master
+  set CHECKEDC_BRANCH=main
 ) else if "%CHECKEDC_BRANCH%"=="" (
-  set CHECKEDC_BRANCH=master
+  set CHECKEDC_BRANCH=main
 )
 
 if not defined CLANG_BRANCH (
   if defined BUILD_SOURCEBRANCHNAME (
     set CLANG_BRANCH=%BUILD_SOURCEBRANCHNAME%
   ) else (
-    set CLANG_BRANCH=master
+    set CLANG_BRANCH=main
   )
 ) else if "%CLANG_BRANCH%"=="" (
-    set CLANG_BRANCH=master
+    set CLANG_BRANCH=main
 )
 
 if not defined SIGN_BRANCH (
-  set SIGN_BRANCH=master
+  set SIGN_BRANCH=main
 ) else if "%SIGN_BRANCH%"=="" (
-  set SIGN_BRANCH=master
+  set SIGN_BRANCH=main
 )
 
 rem set up source versions (Git commit number)

@@ -43,6 +43,7 @@ jobs:
       - name: Run setup-and-test.sh script
         env:
           TEST_SUITE: "CheckedC_tests"
+          CLANG_BRANCH: "bounds_macro"
         run: |
          cd ${{env.BUILD_SOURCESDIRECTORY}}/clang/automation/UNIX/
-         ./build-and-test.sh
+         build-and-test.sh
