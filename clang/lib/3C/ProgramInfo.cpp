@@ -1177,6 +1177,7 @@ void ProgramInfo::addTypedef(PersistentSourceLoc PSL, TypedefDecl *TD,
   else
     V = new PointerVariableConstraint(TD, *this, C);
 
+
   if (!canWrite(PSL.getFileName()))
     V->constrainToWild(this->getConstraints(),
                        ReasonLoc(UNWRITABLE_REASON, PSL));
