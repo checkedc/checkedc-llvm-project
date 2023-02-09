@@ -46,4 +46,4 @@ jobs:
           CLANG_BRANCH: "bounds_macro"
         run: |
          cd ${{env.BUILD_SOURCESDIRECTORY}}/clang/automation/UNIX/
-         build-and-test.sh
+         ./build-and-test.sh
