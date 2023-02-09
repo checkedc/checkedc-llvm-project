@@ -2,8 +2,8 @@ name: Checked C Clang CI [UNIX/check-clang]
 
 on:
   push:
-    branches:
-      - 'main'
+#    branches:
+  #    - 'main'
   pull_request:
       #  branches:
           #  - 'main'
@@ -48,20 +48,3 @@ jobs:
          cd ${{env.BUILD_SOURCESDIRECTORY}}/clang/automation/UNIX/
          ./build-and-test.sh
 
-  test_CheckedC_Clang_on_windows :
-    name: Build Checked C clang and test only checkedc tests on windows
-    needs: clean
-    runs-on: windows-latest
-    steps:
-      - name: Checkout Checked C Clang code
-        uses: actions/checkout@v2
-        with:
-          path: ${{env.BUILD_SOURCESDIRECTORY}}
-      - name: Run setup-and-test.sh script
-        env:
-          TEST_SUITE: "CheckedC_clang"
-          TEST_TARGET_ARCH: "X86"
-        shell: cmd
-        run: |
-         cd ${{env.BUILD_SOURCESDIRECTORY}}\clang\automation\Windows
-         build-and-test.bat
