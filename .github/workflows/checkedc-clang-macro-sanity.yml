@@ -30,4 +30,5 @@ jobs:
           node-version: 14
 
       - name: Run shell script
-        run: sh .$BUILD_SOURCESDIRECTORY/clang/automation/UNIX/setup-and-test.sh
+        uses: actions/checkout@v2
+        run: sh ./clang/automation/UNIX/setup-and-test.sh
