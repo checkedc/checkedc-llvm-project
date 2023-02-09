@@ -30,4 +30,4 @@ jobs:
           node-version: 14
 
       - name: Run shell script
-        run: sh ./${{github.workspace}}/clang/automation/UNIX/setup-and-test.sh
+        run: sh ./$BUILD_SOURCESDIRECTORY/checkedc-llvm-project/clang/automation/UNIX/setup-and-test.sh
