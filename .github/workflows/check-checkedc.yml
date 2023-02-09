@@ -44,6 +44,7 @@ jobs:
         env:
           TEST_SUITE: "CheckedC_tests"
           CLANG_BRANCH: "bounds_macro"
+          CHECKEDC_BRANCH: "main"
         run: |
          cd ${{env.BUILD_SOURCESDIRECTORY}}/clang/automation/UNIX/
          ./build-and-test.sh
