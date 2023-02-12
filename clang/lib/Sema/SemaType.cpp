@@ -4981,11 +4981,11 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         TypeSpecifierType TS = TypeSpecifierType::TST_arrayPtr;
         //With checked'c macro support, DeclQualifiers control the pointer type.
         // Hence we build it up here
-        if (CVRAU == DeclSpec::TQ_CheckedPtr) {
+        if (CVRAU & DeclSpec::TQ_CheckedPtr) {
           CheckedPointerKind = CheckedPointerKind::Ptr;
-        } else if (CVRAU == DeclSpec::TQ_CheckedArrayPtr) {
+        } else if (CVRAU & DeclSpec::TQ_CheckedArrayPtr) {
           CheckedPointerKind = CheckedPointerKind::Array;
-        } else if (CVRAU == DeclSpec::TQ_CheckedNtArrayPtr) {
+        } else if (CVRAU & DeclSpec::TQ_CheckedNtArrayPtr) {
           CheckedPointerKind = CheckedPointerKind::NtArray;
         }
         T = S.BuildPointerType(T, CheckedPointerKind, DeclType.Loc, Name);
