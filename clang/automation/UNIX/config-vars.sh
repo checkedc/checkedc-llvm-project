@@ -27,12 +27,12 @@ elif [ "$BUILDCONFIGURATION" != "Debug" -a "$BUILDCONFIGURATION" != "Release" -a
   CHECKEDC_CONFIG_STATUS="error" 
 fi
 
-if [-z "$CLANG_REPO" ]; then
+if [ -z "$CLANG_REPO" ]; then
   echo "CLANG_REPO not set: must be set to the URL of the Clang repository"
   CHECKEDC_CONFIG_STATUS="error"
 fi
 
-if [-z "$CHECKEDC_REPO" ]; then
+if [ -z "$CHECKEDC_REPO" ]; then
   echo "CHECKEDC_REPO not set: must be set to the URL of the Clang repository"
   CHECKEDC_CONFIG_STATUS="error"
 fi
