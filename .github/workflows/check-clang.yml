@@ -1,22 +1,43 @@
-name: Checked C Clang CI [UNIX/check-clang]
+name: Checked C Clang CI [UNIX]
 
 on:
-  push:
-#    branches:
-  #    - 'main'
-  pull_request:
-      #  branches:
-          #  - 'main'
-           # - 'master'
+  workflow_dispatch:
+    inputs:
+      clang_branch:
+        description: 'Clang Branch name'
+        required: true
+        default: 'main'
+      checkedc_branch:
+        description: 'Checked-C Branch name'
+        required: true
+        default: 'main'
+      checkedc_repo:
+        description: 'Checked-C Repo name'
+        required: true
+        default: 'https://github.com/secure-sw-dev/checkedc.git'
+      clang_repo:
+        description: 'Clang Repo name'
+        required: true
+        default: 'https://github.com/secure-sw-dev/checkedc-llvm-project.git'
+      testType:
+        description: 'Test Type'
+        required: true
+        default: 'CheckedC_clang'
+        options: ['CheckedC_clang', 'CheckedC_LLVM', 'CheckedC_tests', 'CheckedC']
+      Architechture:
+        description: 'Architecture'
+        required: true
+        default: 'X86_64'
+        options: ['X86', 'X86_64']
 
 env:
   builddir: "${{github.workspace}}/b/ninja"
   BUILDCONFIGURATION: "Release"
   BUILD_BINARIESDIRECTORY: "${{github.workspace}}/b"
   BUILD_SOURCESDIRECTORY: "${{github.workspace}}"
-  TEST_TARGET_ARCH: "X86_64"
+  TEST_TARGET_ARCH: ${{ github.event.inputs.Architechture}}
   RUN_LOCAL:  "no"
-  TEST_SUITE: "CheckedC_clang"
+  TEST_SUITE: ${{ github.event.inputs.testType}}
 jobs:
   # Cleanup files left behind by prior runs
   clean:
@@ -43,9 +64,12 @@ jobs:
           path: ${{env.BUILD_SOURCESDIRECTORY}}
       - name: Run setup-and-test.sh script
         env:
-          TEST_SUITE: "CheckedC_clang"
-          CLANG_BRANCH: "bounds_macro"
-          CHECKEDC_BRANCH: "main"
+          TEST_SUITE: ${{ github.event.inputs.testType}}
+          TEST_TARGET_ARCH: ${{ github.event.inputs.Architechture}}
+          CLANG_BRANCH: ${{ github.event.inputs.clang_branch}}
+          CHECKEDC_BRANCH: ${{ github.event.inputs.checkedc_branch}}
+          $CLANG_REPO: ${{ github.event.inputs.clang_repo}}
+          $CHECKEDC_REPO: ${{ github.event.inputs.checkedc_repo}}
         run: |
          cd ${{env.BUILD_SOURCESDIRECTORY}}/clang/automation/UNIX/
          ./build-and-test.sh
