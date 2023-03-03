@@ -2761,7 +2761,6 @@ public:
 
   CheckedPointerKind getKind() const { return CheckedPointerKind(PointerTypeBits.CheckedPointerKind); }
 
-  void setKind(CheckedPointerKind ptrKind) { PointerTypeBits.CheckedPointerKind = (unsigned)ptrKind; }
   /// Returns true if address spaces of pointers overlap.
   /// OpenCL v2.0 defines conversion rules for pointers to different
   /// address spaces (OpenCLC v2.0 s6.5.5) and notion of overlapping

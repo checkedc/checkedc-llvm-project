@@ -36,10 +36,11 @@ fi
 cd "$BUILD_SOURCESDIRECTORY"
 
 # Check out Clang
-clone_or_update checkedc-clang "$CLANG_REPO" "$CLANG_BRANCH" "$CLANG_COMMIT"
+clone_or_update checkedc-clang https://github.com/Microsoft/checkedc-clang "$CLANG_BRANCH" "$CLANG_COMMIT"
 
 # Check out Checked C Tests
-clone_or_update checkedc-clang/llvm/projects/checkedc-wrapper/checkedc "$CHECKEDC_REPO" "$CHECKEDC_BRANCH" "$CHECKEDC_COMMIT"
+clone_or_update checkedc-clang/llvm/projects/checkedc-wrapper/checkedc
+https://github.com/Microsoft/checkedc "$CHECKEDC_BRANCH" "$CHECKEDC_COMMIT"
 
 # Check out LLVM test suite
 if [ -n "$LNT" ]; then
