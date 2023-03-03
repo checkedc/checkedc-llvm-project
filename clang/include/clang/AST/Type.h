@@ -691,10 +691,6 @@ public:
   unsigned getLocalFastQualifiers() const { return Value.getInt(); }
   void setLocalFastQualifiers(unsigned Quals) { Value.setInt(Quals); }
 
-  void QualifyAsCheckedPtr() const;
-  void QualifyAsCheckedArrayPtr() const;
-  void QualifyAsCheckedNtArrayPtr() const;
-
   /// Retrieves a pointer to the underlying (unqualified) type.
   ///
   /// This function requires that the type not be NULL. If the type might be
@@ -2765,7 +2761,6 @@ public:
 
   CheckedPointerKind getKind() const { return CheckedPointerKind(PointerTypeBits.CheckedPointerKind); }
 
-  void setKind(CheckedPointerKind ptrKind) { PointerTypeBits.CheckedPointerKind = (unsigned)ptrKind; }
   /// Returns true if address spaces of pointers overlap.
   /// OpenCL v2.0 defines conversion rules for pointers to different
   /// address spaces (OpenCLC v2.0 s6.5.5) and notion of overlapping
@@ -6751,29 +6746,6 @@ inline SplitQualType SplitQualType::getSingleStepDesugaredType() const {
 inline const Type *QualType::getTypePtr() const {
   return getCommonPtr()->BaseType;
 }
-
-inline void QualType::QualifyAsCheckedPtr() const
-{
-  auto TypPtr = getCommonPtr()->BaseType;
-  PointerType *PT = (PointerType *)(const_cast<Type*>(TypPtr));
-  PT->setKind(CheckedPointerKind::Ptr);
-}
-
-inline void QualType::QualifyAsCheckedArrayPtr() const
-{
-  auto TypPtr = getCommonPtr()->BaseType;
-  PointerType *PT = (PointerType *)(const_cast<Type*>(TypPtr));
-  PT->setKind(CheckedPointerKind::Array);
-}
-
-
-inline void QualType::QualifyAsCheckedNtArrayPtr() const
-{
-  auto TypPtr = getCommonPtr()->BaseType;
-  PointerType *PT = (PointerType *)(const_cast<Type*>(TypPtr));
-  PT->setKind(CheckedPointerKind::NtArray);
-}
-
 
 inline const Type *QualType::getTypePtrOrNull() const {
   return (isNull() ? nullptr : getCommonPtr()->BaseType);

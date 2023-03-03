@@ -27,17 +27,6 @@ elif [ "$BUILDCONFIGURATION" != "Debug" -a "$BUILDCONFIGURATION" != "Release" -a
   CHECKEDC_CONFIG_STATUS="error" 
 fi
 
-if [ -z "$CLANG_REPO" ]; then
-  echo "CLANG_REPO not set: must be set to the URL of the Clang repository"
-  CHECKEDC_CONFIG_STATUS="error"
-fi
-
-if [ -z "$CHECKEDC_REPO" ]; then
-  echo "CHECKEDC_REPO not set: must be set to the URL of the Clang repository"
-  CHECKEDC_CONFIG_STATUS="error"
-fi
-
-
 if [ -z "$BUILD_PACKAGE" ]; then
   export BUILD_PACKAGE="No"
 elif [ "$BUILD_PACKAGE" != "Yes" -a "$BUILD_PACKAGE" != "No" ]; then
@@ -84,11 +73,11 @@ export LLVM_OBJ_DIR="${BUILD_BINARIESDIRECTORY}/LLVM-${BUILDCONFIGURATION}-${BUI
 # Validate Test Suite configuration
 
 if [ -z "$TEST_SUITE" ]; then
-  echo "TEST_SUITE not set: must be set to one of CheckedC_tests, CheckedC, CheckedC_clang, or CheckedC_LLVM"
+  echo "TEST_SUITE not set: must be set to one of CheckedC, CheckedC_clang, or CheckedC_LLVM"
   CHECKEDC_CONFIG_STATUS="error" 
 elif [ "$TEST_SUITE" != "CheckedC" -a "$TEST_SUITE" != "CheckedC_clang" -a \
-       "$TEST_SUITE" != "CheckedC_LLVM" -a "$TEST_SUITE" != "CheckedC_tests"]; then
-  echo "Unknown TEST_SUITE value $TEST_SUITE: must be one of CheckedC_tests, CheckedC, CheckedC_clang, or CheckedC_LLVM"
+       "$TEST_SUITE" != "CheckedC_LLVM" ]; then
+  echo "Unknown TEST_SUITE value $TEST_SUITE: must be one of CheckedC, CheckedC_clang, or CheckedC_LLVM"
   CHECKEDC_CONFIG_STATUS="error" 
 fi
 

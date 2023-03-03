@@ -2271,7 +2271,6 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       LHS = ParseGenericMacroFunctionApplication(LHS, Loc);
       if (LHS.isInvalid())
         LHS = ExprError();
-
       break;
     }
     }
