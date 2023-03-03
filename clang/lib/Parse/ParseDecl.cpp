@@ -2161,12 +2161,6 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
   // If we don't have a comma, it is either the end of the list (a ';') or an
   // error, bail out.
   SourceLocation CommaLoc;
-  //if you are here with ')' , then it means you where probably parsing
-  // a _Where_M(exp), --> So maybe its after all not an error.
-  //Try consuming the ')' and see if you have a comma.
-  if (Tok.is(tok::r_paren)){
-    ConsumeToken();
-  }
 
   while (TryConsumeToken(tok::comma, CommaLoc)) {
     if (Tok.isAtStartOfLine() && ExpectSemi && !MightBeDeclarator(Context)) {
