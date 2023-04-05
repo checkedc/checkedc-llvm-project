@@ -291,27 +291,6 @@ Retry:
 
     return StmtRes;
   }
-
-  case tok::kw__Where_M:{
-    WhereClause *WClause = ParseMacroWhereClause();
-
-    if (!WClause)
-      return StmtError();
-
-    StmtResult StmtRes = Actions.ActOnNullStmt(SourceLocation());
-    if (StmtRes.isInvalid() || !isa<NullStmt>(StmtRes.get()))
-      return StmtError();
-
-    auto *NS = dyn_cast<NullStmt>(StmtRes.get());
-    NS->setWhereClause(WClause);
-
-    // The where clause should end with a semicolon.
-    if (ExpectAndConsume(tok::semi))
-      return StmtError();
-
-    return StmtRes;
-
-  }
   case tok::kw_if:                  // C99 6.8.4.1: if-statement
     return ParseIfStatement(TrailingElseLoc);
   case tok::kw_switch:              // C99 6.8.4.2: switch-statement
@@ -2743,48 +2722,12 @@ WhereClause *Parser::ParseWhereClause() {
   return WClause;
 }
 
-WhereClause *Parser::ParseMacroWhereClause() {
-  EnterScope(getCurScope()->getFlags() | Scope::WhereClauseScope);
-  WhereClause *WClause = ParseMacroWhereClauseHelper();
-  ExitScope();
-  return WClause;
-}
-
 WhereClause *Parser::ParseWhereClauseHelper() {
   SourceLocation WhereLoc = Tok.getLocation();
 
-  // Consume the "_Where" token.
-  if (ExpectAndConsume(tok::kw__Where)) {
-    SkipUntil(tok::semi, StopBeforeMatch);
-    return nullptr;
-  }
-
-  WhereClause *WClause = Actions.ActOnWhereClause(WhereLoc);
-  if (!WClause)
-    return nullptr;
-
-  // Parse each where clause fact. We want to issue diagnostics for as many
-  // parsing errors a possible. So we do not break on the first error.
-  bool IsError = false;
-  do {
-    WhereClauseFact *Fact = ParseWhereClauseFact();
-    if (!Fact)
-      IsError = true;
-    else
-      WClause->addFact(Fact);
-  } while (TryConsumeToken(tok::kw__And));
-
-  if (IsError)
-    return nullptr;
-  return WClause;
-}
-
-WhereClause *Parser::ParseMacroWhereClauseHelper() {
-  SourceLocation WhereLoc = Tok.getLocation();
-
-  //keep consuming kw__Where_M until we reach the '(' token.
-  while (Tok.is(tok::kw__Where_M)) {
-    ExpectAndConsume(tok::kw__Where_M);
+  //keep consuming kw__Where until we reach the '(' token.
+  while (Tok.is(tok::kw__Where)) {
+    ExpectAndConsume(tok::kw__Where);
   }
 
   WhereClause *WClause = Actions.ActOnWhereClause(WhereLoc);

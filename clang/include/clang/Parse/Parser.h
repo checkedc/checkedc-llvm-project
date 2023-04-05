@@ -2124,15 +2124,8 @@ private:
   /// clause.
   WhereClause *ParseWhereClause();
 
-  /// Enters and exits Macro WhereClause scope. Invokes ParseMacroWhereClauseHelper to parse a where
-  /// clause.
-  WhereClause *ParseMacroWhereClause();
-
   /// Parse a Checked C where clause.
   WhereClause *ParseWhereClauseHelper();
-
-  /// Parse a Checked C Macro where clause.
-  WhereClause * ParseMacroWhereClauseHelper();
 
   /// Parse a Checked C where clause fact.
   WhereClauseFact *ParseWhereClauseFact();

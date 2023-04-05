@@ -4974,26 +4974,33 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         }
       }
 
-      if (DeclType.Ptr.TypeQuals)
-      {
-        auto CVRAU = DeclType.Ptr.TypeQuals;
-        auto CheckedPointerKind = CheckedPointerKind::Unchecked;
+      if (DeclType.Ptr.TypeQuals) {
+        CheckedPointerKind CheckedPointerKind = CheckedPointerKind::Unchecked;
         TypeSpecifierType TS = TypeSpecifierType::TST_arrayPtr;
-        //With checked'c macro support, DeclQualifiers control the pointer type.
+
+        // With checkedc-macro support, DeclQualifiers control the pointer type.
         // Hence we build it up here
-        if (CVRAU & DeclSpec::TQ_CheckedPtr) {
+        switch (DeclType.Ptr.TypeQuals &
+                (DeclSpec::TQ_CheckedPtr | DeclSpec::TQ_CheckedArrayPtr
+                 | DeclSpec::TQ_CheckedNtArrayPtr)) {
+        case DeclSpec::TQ_CheckedPtr:
           CheckedPointerKind = CheckedPointerKind::Ptr;
-        } else if (CVRAU & DeclSpec::TQ_CheckedArrayPtr) {
+          break;
+        case DeclSpec::TQ_CheckedArrayPtr:
           CheckedPointerKind = CheckedPointerKind::Array;
-        } else if (CVRAU & DeclSpec::TQ_CheckedNtArrayPtr) {
+          break;
+        case DeclSpec::TQ_CheckedNtArrayPtr:
           CheckedPointerKind = CheckedPointerKind::NtArray;
+          break;
         }
+
         T = S.BuildPointerType(T, CheckedPointerKind, DeclType.Loc, Name);
-        T = S.BuildQualifiedType(T, DeclType.Loc, CVRAU);
+        T = S.BuildQualifiedType(T, DeclType.Loc, DeclType.Ptr.TypeQuals);
       }
       else
       {
-        T = S.BuildPointerType(T, CheckedPointerKind::Unchecked, DeclType.Loc, Name);
+        T = S.BuildPointerType(T, CheckedPointerKind::Unchecked,
+                               DeclType.Loc, Name);
       }
       break;
     case DeclaratorChunk::Reference: {

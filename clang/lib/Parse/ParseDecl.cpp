@@ -31,7 +31,6 @@
 
 using namespace clang;
 
-
 //===----------------------------------------------------------------------===//
 // C99 6.7: Declarations.
 //===----------------------------------------------------------------------===//
@@ -1947,10 +1946,7 @@ bool Parser::ParseWhereClauseOnDecl(Decl *D) {
     return false;
   }
   WhereClause *WClause;
-  if (Tok.getKind() == tok::kw__Where_M)
-    WClause = ParseMacroWhereClause();
-  else
-    WClause = ParseWhereClause();
+  WClause = ParseWhereClause();
 
   if (!WClause)
     return false;
@@ -2415,8 +2411,7 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(
     }
     else if (Tok.is(tok::kw__Bounds) || Tok.is(tok::kw__Any) ||
              Tok.is(tok::kw__Byte_count) || Tok.is(tok::kw__Count) ||
-             Tok.is(tok::kw__Itype))
-    {
+             Tok.is(tok::kw__Itype)) {
       // parse the bounds annotations
       if (ParseBoundsAnnotations(D, Tok.getLocation(), Annots)) {
         SkipUntil(tok::comma, tok::equal, StopAtSemi | StopBeforeMatch);
@@ -4160,8 +4155,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
     case tok::kw__Ptr:
     case tok::kw__Array_ptr:
-    case tok::kw__Nt_array_ptr:
-    {
+    case tok::kw__Nt_array_ptr: {
       ParseCheckedPointerSpecifiers(DS);
       // continue to keep the current token from being consumed.
       continue; 
@@ -4218,24 +4212,18 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_restrict, Loc, PrevSpec, DiagID,
                                  getLangOpts());
       break;
-    case tok::kw__Single: // macro for _Ptr
-    {
+    case tok::kw__Single:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_CheckedPtr, Loc, PrevSpec, DiagID,
                                  getLangOpts());
       break;
-    }
-    case tok::kw__Array: // macro for _Array_ptr
-    {
+    case tok::kw__Array:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_CheckedArrayPtr, Loc, PrevSpec, DiagID,
                                  getLangOpts());
       break;
-    }
-    case tok::kw__Nt_array: // macro for _Nt_array_ptr
-    {
+    case tok::kw__Nt_array:
       isInvalid = DS.SetTypeQual(DeclSpec::TQ_CheckedNtArrayPtr, Loc, PrevSpec, DiagID,
                                  getLangOpts());
       break;
-    }
     // C++ typename-specifier:
     case tok::kw_typename:
       if (TryAnnotateTypeOrScopeToken()) {
@@ -5357,7 +5345,6 @@ bool Parser::isKnownToBeTypeSpecifier(const Token &Tok) const {
   // Checked C existential types
   case tok::kw__Exists:
   case tok::kw__Unpack:
-
     return true;
   }
 }

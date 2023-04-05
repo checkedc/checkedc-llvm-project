@@ -2262,11 +2262,10 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
 
       // Look for the start of a generic type argument list:
       // '(' type name  ... , type name n ')'
-      bool IsAmbiguous;
-      Token LastToken = Tok;
+      Token const LastToken = Tok;
       ConsumeToken(); // Consume the _TyArgs token
       // Consume the '(' token
-      SourceLocation Loc = ConsumeAnyToken();
+      SourceLocation const Loc = ConsumeAnyToken();
       // Consume the '(' token
       LHS = ParseGenericMacroFunctionApplication(LHS, Loc);
       if (LHS.isInvalid())
@@ -3505,7 +3504,9 @@ bool Parser::StartsBoundsExpression(const Token &T) {
     IdentifierInfo *Ident = T.getIdentifierInfo();
     return (Ident == Ident_byte_count || Ident == Ident_count ||
             Ident == Ident_bounds);
-  }else if (T.getKind() == tok::kw__Count || T.getKind() == tok::kw__Byte_count ||
+  }
+
+  if (T.getKind() == tok::kw__Count || T.getKind() == tok::kw__Byte_count ||
             T.getKind() == tok::kw__Bounds)
     return true;
   return false;
@@ -3531,8 +3532,7 @@ bool Parser::StartsRelativeBoundsClause(Token &T) {
 }
 
 bool Parser::StartsWhereClause(const Token &T) {
-  return getLangOpts().CheckedC && (T.is(tok::kw__Where)
-            || T.is(tok::kw__Where_M));
+  return getLangOpts().CheckedC && (T.is(tok::kw__Where));
 }
 
 ExprResult Parser::ParseInteropTypeAnnotation(const Declarator &D, bool IsReturn) {
@@ -3703,13 +3703,10 @@ void Parser::SkipInvalidBoundsExpr(SourceLocation CurrentLoc) {
     Paren.skipToEnd();
   }
 }
-//write a definition for the function isMacroCheckedCKeyword
-bool Parser::isMacroCheckedCKeyword(tok::TokenKind Kind){
-  if (Kind == tok::kw__Count || Kind == tok::kw__Bounds ||
-      Kind == tok::kw__Byte_count || Kind == tok::kw__Itype ||
-      Kind == tok::kw__Where_M)
-    return true;
-  return false;
+
+bool Parser::isMacroCheckedCKeyword(tok::TokenKind Kind) {
+  return (Kind == tok::kw__Count || Kind == tok::kw__Bounds ||
+          Kind == tok::kw__Byte_count || Kind == tok::kw__Itype);
 }
 
 ExprResult Parser::ParseBoundsExpression() {
@@ -3722,7 +3719,7 @@ ExprResult Parser::ParseBoundsExpression() {
   }
 
   IdentifierInfo *Ident = Tok.getIdentifierInfo();
-  auto BoundsToken = Tok.getKind();
+  tok::TokenKind CurrToken = Tok.getKind();
   SourceLocation BoundsKWLoc = Tok.getLocation();
   ConsumeToken();
 
@@ -3734,11 +3731,11 @@ ExprResult Parser::ParseBoundsExpression() {
 
   ExprResult Result;
   if (Ident == Ident_byte_count || Ident == Ident_count
-      || BoundsToken == tok::kw__Byte_count || BoundsToken == tok::kw__Count) {
+      || CurrToken == tok::kw__Byte_count || CurrToken == tok::kw__Count) {
     // Parse byte_count(e1) or count(e1)
     Result = Actions.CorrectDelayedTyposInExpr(ParseAssignmentExpression());
     BoundsExpr::Kind CountKind = (Ident == Ident_count
-                                  || BoundsToken == tok::kw__Count) ?
+                                  || CurrToken == tok::kw__Count) ?
       BoundsExpr::Kind::ElementCount : BoundsExpr::Kind::ByteCount;
     if (Result.isInvalid())
       Result = ExprError();
@@ -3746,7 +3743,7 @@ ExprResult Parser::ParseBoundsExpression() {
       Result = Actions.ActOnCountBoundsExpr(BoundsKWLoc, CountKind,
                                             Result.get(),
                                            Tok.getLocation());
-  } else if (Ident == Ident_bounds || BoundsToken == tok::kw__Bounds) {
+  } else if (Ident == Ident_bounds || CurrToken == tok::kw__Bounds) {
     // Parse bounds(unknown) or bounds(e1, e2)
     bool FoundNullaryOperator = false;
 
@@ -3855,31 +3852,29 @@ std::pair<bool, Parser::TypeArgVector> Parser::ParseGenericTypeArgumentList(Sour
 // Return false if parsing succeeds, in which case the 'typeArgs' is also populated.
 // Return true if parsing fails.
 std::pair<bool, Parser::TypeArgVector>
-    Parser::ParseGenericMacroTypeArgumentList(SourceLocation Loc) {
+Parser::ParseGenericMacroTypeArgumentList(SourceLocation Loc) {
   Parser::TypeArgVector typeArgumentInfos;
-  auto err = std::make_pair<>(true, Parser::TypeArgVector());
-  auto firstTypeArgument = true;
+  std::pair<bool, Parser::TypeArgVector> err(true,
+                                             Parser::TypeArgVector());
+
   // Expect to see a list of type names, followed by a ')'.
-  while (Tok.getKind() != tok::r_paren) {
-    if (!firstTypeArgument) {
-      if (ExpectAndConsume(tok::comma,
-                           diag::err_type_function_comma_or_greater_expected)) {
-        // We want to consume greater, but not consume semi
-        SkipUntil(tok::r_paren, StopAtSemi | StopBeforeMatch);
-        if (Tok.getKind() == tok::r_paren) ConsumeAnyToken();
-        return err;
-      }
-    } else
-      firstTypeArgument = false;
+  do {
+    if (Tok.getKind() == tok::comma) {
+      ConsumeToken();
+    } else if (Tok.getKind() != tok::r_paren && !typeArgumentInfos.empty()) {
+      Diag(Tok, diag::err_type_function_comma_or_greater_expected);
+      SkipUntil(tok::r_paren, StopAtSemi | StopBeforeMatch);
+      if (Tok.getKind() == tok::r_paren) ConsumeAnyToken();
+      return err;
+    }
 
     // Expect to see type name.
     TypeResult Ty = ParseTypeName(nullptr /*Range*/,
-                                  DeclaratorContext::TypeName, AS_none,
+                                  DeclaratorContext::TypeName,
+                                  AS_none,
                                   nullptr /*OwnedType*/,
                                   nullptr /*Attrs*/);
     if (Ty.isInvalid()) {
-      // We do not need to write an error message since ParseTypeName does.
-      // We want to consume greater, but not consume semi
       SkipUntil(tok::r_paren, StopAtSemi | StopBeforeMatch);
       if (Tok.getKind() == tok::r_paren) ConsumeAnyToken();
       return err;
@@ -3888,7 +3883,9 @@ std::pair<bool, Parser::TypeArgVector>
     TypeSourceInfo *TInfo;
     QualType realType = Actions.GetTypeFromParser(Ty.get(), &TInfo);
     typeArgumentInfos.push_back({ realType, TInfo });
-  }
+
+  } while (Tok.getKind() != tok::r_paren);
+
   ConsumeAnyToken(); // consume ')' token
 
   return std::make_pair(false, typeArgumentInfos);
@@ -3899,10 +3896,14 @@ std::pair<bool, Parser::TypeArgVector>
 // in which case it is a generic type argument list.
 //
 // Returns false if parsing succeeded and true if an error occurred.
-ExprResult Parser::ParseGenericFunctionApplication(ExprResult Res, SourceLocation Loc) {
+ExprResult Parser::ParseGenericFunctionApplication(ExprResult Res,
+                                                   SourceLocation Loc) {
   auto ArgRes = ParseGenericTypeArgumentList(Loc);
   if (ArgRes.first) return ExprError();
-  return Actions.ActOnFunctionTypeApplication(Res, Loc, ArrayRef<TypeArgument>(ArgRes.second));
+  return Actions.ActOnFunctionTypeApplication(Res,
+                                              Loc,
+                                              ArrayRef<TypeArgument>
+                                                (ArgRes.second));
 }
 
 // Parse a generic type argument list for a function application.  The suffix of postfix expression can

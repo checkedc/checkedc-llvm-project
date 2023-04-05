@@ -619,7 +619,7 @@ public:
     TQ_CheckedNtArrayPtrLoc = SourceLocation();
   }
 
-  void ClearCheckedTypeQualifiers(){
+  void ClearCheckedTypeQualifiers() {
     TypeQualifiers = TypeQualifiers & ~(
         TQ_CheckedPtr | TQ_CheckedArrayPtr | TQ_CheckedNtArrayPtr);
     TQ_CheckedPtrLoc = SourceLocation();
