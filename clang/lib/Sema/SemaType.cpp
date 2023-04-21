@@ -4980,22 +4980,35 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
 
         // With checkedc-macro support, DeclQualifiers control the pointer type.
         // Hence we build it up here
-        switch (DeclType.Ptr.TypeQuals &
-                (DeclSpec::TQ_CheckedPtr | DeclSpec::TQ_CheckedArrayPtr
-                 | DeclSpec::TQ_CheckedNtArrayPtr)) {
-        case DeclSpec::TQ_CheckedPtr:
+        unsigned CheckedQuals = DeclType.Ptr.TypeQuals &
+                                (DeclSpec::TQ_CheckedPtr |
+                                 DeclSpec::TQ_CheckedArrayPtr
+                                 | DeclSpec::TQ_CheckedNtArrayPtr);
+        // Conflicting checked-c macro qualifiers are not allowed
+        bool ConflictingQuals = false;
+
+        if (CheckedQuals & DeclSpec::TQ_CheckedPtr) {
           CheckedPointerKind = CheckedPointerKind::Ptr;
-          break;
-        case DeclSpec::TQ_CheckedArrayPtr:
+        }
+        if (CheckedQuals & DeclSpec::TQ_CheckedArrayPtr) {
+          if (CheckedPointerKind != CheckedPointerKind::Unchecked) {
+            ConflictingQuals = true;
+          }
           CheckedPointerKind = CheckedPointerKind::Array;
-          break;
-        case DeclSpec::TQ_CheckedNtArrayPtr:
+        }
+        if (CheckedQuals & DeclSpec::TQ_CheckedNtArrayPtr) {
+          if (CheckedPointerKind != CheckedPointerKind::Unchecked) {
+            ConflictingQuals = true;
+          }
           CheckedPointerKind = CheckedPointerKind::NtArray;
-          break;
         }
 
-        T = S.BuildPointerType(T, CheckedPointerKind, DeclType.Loc, Name);
-        T = S.BuildQualifiedType(T, DeclType.Loc, DeclType.Ptr.TypeQuals);
+        if (ConflictingQuals) {
+          S.Diag(DeclType.Loc, diag::err_conflicting_checked_pointer_type_qual);
+        } else {
+          T = S.BuildPointerType(T, CheckedPointerKind, DeclType.Loc, Name);
+          T = S.BuildQualifiedType(T, DeclType.Loc, DeclType.Ptr.TypeQuals);
+        }
       }
       else
       {

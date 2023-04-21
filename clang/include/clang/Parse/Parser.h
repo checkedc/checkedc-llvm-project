@@ -2120,12 +2120,8 @@ private:
   /// Parse a pack expression of the form '_Pack(expr, existential_type, substitution_type)'.
   ExprResult ParsePackExpression();
 
-  /// Enters and exits WhereClause scope. Invokes ParseWhereClauseHelper to parse a where
-  /// clause.
-  WhereClause *ParseWhereClause();
-
   /// Parse a Checked C where clause.
-  WhereClause *ParseWhereClauseHelper();
+  WhereClause *ParseWhereClause();
 
   /// Parse a Checked C where clause fact.
   WhereClauseFact *ParseWhereClauseFact();

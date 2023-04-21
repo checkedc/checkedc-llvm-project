@@ -2264,9 +2264,15 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       // '(' type name  ... , type name n ')'
       Token const LastToken = Tok;
       ConsumeToken(); // Consume the _TyArgs token
-      // Consume the '(' token
-      SourceLocation const Loc = ConsumeAnyToken();
-      // Consume the '(' token
+
+      if (Tok.isNot(tok::l_paren)) {
+        Diag(Tok, diag::err_expected_lparen_after) << "_TyArgs";
+        LHS = ExprError();
+        break;
+      }
+
+      // Expect and consume the '(' token
+      SourceLocation const Loc = ConsumeAnyToken(); // Consume the '(' token
       LHS = ParseGenericMacroFunctionApplication(LHS, Loc);
       if (LHS.isInvalid())
         LHS = ExprError();
@@ -3631,7 +3637,7 @@ bool Parser::ParseBoundsAnnotations(const Declarator &D,
             if (!Bounds)
               Bounds = NewBounds;
             else
-             Diag(NewBounds->getBeginLoc(), diag::err_single_bounds_expr_allowed);  
+             Diag(NewBounds->getBeginLoc(), diag::err_single_bounds_expr_allowed);
           } else
             llvm_unreachable("unexpected case failure");
       }
@@ -3753,7 +3759,7 @@ ExprResult Parser::ParseBoundsExpression() {
       if (NextIdent == Ident_unknown) {
         FoundNullaryOperator = true;
         ConsumeToken();
-        Result = Actions.ActOnNullaryBoundsExpr(BoundsKWLoc, 
+        Result = Actions.ActOnNullaryBoundsExpr(BoundsKWLoc,
                                                 BoundsExpr::Kind::Unknown,
                                                 Tok.getLocation());
       }
@@ -3854,22 +3860,31 @@ std::pair<bool, Parser::TypeArgVector> Parser::ParseGenericTypeArgumentList(Sour
 std::pair<bool, Parser::TypeArgVector>
 Parser::ParseGenericMacroTypeArgumentList(SourceLocation Loc) {
   Parser::TypeArgVector typeArgumentInfos;
-  std::pair<bool, Parser::TypeArgVector> err(true,
-                                             Parser::TypeArgVector());
+  std::pair<bool, Parser::TypeArgVector> errorResult(true,
+                                                     Parser::TypeArgVector());
+
+  auto handleError = [&]() {
+    SkipUntil(tok::r_paren, StopAtSemi | StopBeforeMatch);
+    if (Tok.getKind() == tok::r_paren) ConsumeAnyToken();
+    return errorResult;
+  };
 
   // Expect to see a list of type names, followed by a ')'.
+  bool firstIteration = true;
   do {
-    if (Tok.getKind() == tok::comma) {
-      ConsumeToken();
-    } else if (Tok.getKind() != tok::r_paren && !typeArgumentInfos.empty()) {
-      Diag(Tok, diag::err_type_function_comma_or_greater_expected);
-      SkipUntil(tok::r_paren, StopAtSemi | StopBeforeMatch);
-      if (Tok.getKind() == tok::r_paren) ConsumeAnyToken();
-      return err;
+    if (!firstIteration) {
+      if (Tok.getKind() == tok::comma) { // consume comma
+        ConsumeToken();
+      } else if (Tok.getKind() != tok::r_paren && !typeArgumentInfos.empty()) {
+        Diag(Tok, diag::err_type_function_comma_or_greater_expected);
+        return handleError();
+      }
+    } else {
+      firstIteration = false;
     }
 
     // Expect to see type name.
-    TypeResult Ty = ParseTypeName(nullptr /*Range*/,
+    TypeResult const Ty = ParseTypeName(nullptr /*Range*/,
                                   DeclaratorContext::TypeName,
                                   AS_none,
                                   nullptr /*OwnedType*/,
@@ -3877,16 +3892,19 @@ Parser::ParseGenericMacroTypeArgumentList(SourceLocation Loc) {
     if (Ty.isInvalid()) {
       SkipUntil(tok::r_paren, StopAtSemi | StopBeforeMatch);
       if (Tok.getKind() == tok::r_paren) ConsumeAnyToken();
-      return err;
+      return errorResult;
     }
 
     TypeSourceInfo *TInfo;
-    QualType realType = Actions.GetTypeFromParser(Ty.get(), &TInfo);
+    QualType const realType = Actions.GetTypeFromParser(Ty.get(), &TInfo);
     typeArgumentInfos.push_back({ realType, TInfo });
 
   } while (Tok.getKind() != tok::r_paren);
 
-  ConsumeAnyToken(); // consume ')' token
+  if (!ExpectAndConsume(tok::r_paren,
+                        diag::err_expected_r_parent_in_where_clause)) {
+    return handleError();
+  }
 
   return std::make_pair(false, typeArgumentInfos);
 }
