@@ -2157,7 +2157,6 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
   // If we don't have a comma, it is either the end of the list (a ';') or an
   // error, bail out.
   SourceLocation CommaLoc;
-
   while (TryConsumeToken(tok::comma, CommaLoc)) {
     if (Tok.isAtStartOfLine() && ExpectSemi && !MightBeDeclarator(Context)) {
       // This comma was followed by a line-break and something which can't be
@@ -5339,12 +5338,16 @@ bool Parser::isKnownToBeTypeSpecifier(const Token &Tok) const {
   case tok::kw__Array_ptr:
   case tok::kw__Nt_array_ptr:
   case tok::kw__Ptr:
-  case tok::kw__Single: //macro version of kw__Ptr
-  case tok::kw__Array: //macro version of kw__Array_ptr
-  case tok::kw__Nt_array: //macro version of kw__Nt_array_ptr
+
+  // Checked C macro versions of pointer types
+  case tok::kw__Single:
+  case tok::kw__Array:
+  case tok::kw__Nt_array:
+
   // Checked C existential types
   case tok::kw__Exists:
   case tok::kw__Unpack:
+
     return true;
   }
 }
