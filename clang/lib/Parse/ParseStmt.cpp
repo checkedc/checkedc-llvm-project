@@ -2716,13 +2716,6 @@ WhereClauseFact *Parser::ParseWhereClauseFact() {
 }
 
 WhereClause *Parser::ParseWhereClause() {
-  EnterScope(getCurScope()->getFlags() | Scope::WhereClauseScope);
-  WhereClause *WClause = ParseWhereClauseHelper();
-  ExitScope();
-  return WClause;
-}
-
-WhereClause *Parser::ParseWhereClauseHelper() {
   SourceLocation WhereLoc = Tok.getLocation();
 
   //keep consuming kw__Where until we reach the '(' token.
