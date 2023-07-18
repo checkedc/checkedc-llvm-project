@@ -1,4 +1,4 @@
-// UNSUPPORTED: system-windows
+// UNSUPPORTED: !linux
 
 // Test calls to variadic functions in checked scopes.
 // Some -Wformat error messages are different between linux and windows
