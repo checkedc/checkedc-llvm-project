@@ -14,6 +14,7 @@ add_clang_library(clangSema
   AvailableFactsAnalysis.cpp
   BoundsUtils.cpp
   BoundsWideningAnalysis.cpp
+  BoundsDeclExtent.cpp
   CheckedCAlias.cpp
   CheckedCAnalysesPrepass.cpp
   CheckedCInterop.cpp
