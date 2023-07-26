@@ -46,7 +46,10 @@ contain the core inference logic, while 5C will add features to
 enhance developer productivity. If you'd like more information about
 5C, please contact us at info@correctcomputation.com.
 
-### Which `checkedc-clang` repository to use?
+### Using Checked C and 3C
+
+The Checked C and 3C tools are built and tested as part of the regular process of building Checked C from the checkedc-clang repository. 
+As such, users will automatically have the most recent and stable versions of both tools when building Checked C.
 
 We typically recommend that serious 3C users use CCI's repository to
 get 3C fixes and enhancements sooner, but in some scenarios, you may
