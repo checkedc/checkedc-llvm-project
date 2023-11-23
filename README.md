@@ -20,7 +20,7 @@ specifically [this](https://github.com/llvm/llvm-project/commit/c89a3d78f43d81b9
 ## Trying out Checked C
 
 You can install the Checked C compiler and the 3C tool
-from the [Checked C LLVM Project releases page] (https://github.com/checkedc/checkedc-llvm-project/releases).  
+from the [Checked C LLVM Project releases page] (https://github.com/checkedc/checkedc-llvm-project/releases).
 There are versions available for Ubuntu 22.04, Windows 10/11, and MacOS.
 The compiler user
 manual is [here](https://github.com/checkedc/checkedc-llvm-project/wiki/Checked-C-clang-user-manual).
