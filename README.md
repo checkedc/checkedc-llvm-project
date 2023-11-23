@@ -24,7 +24,7 @@ from the [Checked C LLVM Project releases page](https://github.com/checkedc/chec
 There are versions available for Ubuntu 22.04, Windows 10/11, and MacOS.
 The compiler user
 manual is [here](https://github.com/checkedc/checkedc-llvm-project/wiki/Checked-C-clang-user-manual).
-For more information on Checked C and pointers to example code, see tge
+For more information on Checked C and pointers to example code, see the
 [Checked C wiki](https://github.com/checkedc/checkedc/wiki).
 If you want to build your own copy of the compiler, see the directions on the
 [Checked C LLVM Project wiki](https://github.com/checkedc/checkedc-llvm-project/wiki).
