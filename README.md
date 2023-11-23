@@ -24,10 +24,10 @@ from the [Checked C LLVM Project releases page](https://github.com/checkedc/chec
 There are versions available for Ubuntu 22.04, Windows 10/11, and MacOS.
 The compiler user
 manual is [here](https://github.com/checkedc/checkedc-llvm-project/wiki/Checked-C-clang-user-manual).
-For more information on Checked C and pointers to example code, see our
-[Wiki](https://github.com/checkedc/checkedc/wiki).
+For more information on Checked C and pointers to example code, see tge
+[Checked C wiki](https://github.com/checkedc/checkedc/wiki).
 If you want to build your own copy of the compiler, see the directions on the
-[Checked C clang wiki](https://github.com/checkedc/checkedc-llvm-project/wiki).
+[Checked C LLVM Project wiki](https://github.com/checkedc/checkedc-llvm-project/wiki).
 
 You can use `clangd` built from this repository to get similar IDE support for
 editing Checked C code as upstream `clangd` provides for C code. For example,
@@ -49,7 +49,7 @@ conversion of C code to Checked C. Quick documentation links:
 
 ## More information
 
-For more information on the Checked C clang compiler, see the [SSDP LLVM Project
+For more information on the Checked C clang compiler, see the [Checked C LLVM Project
 wiki](https://github.com/checkedc/checkedc-llvm-project/wiki).
 
 ## Build Status
