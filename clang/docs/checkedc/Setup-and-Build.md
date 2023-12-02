@@ -243,7 +243,7 @@ For additional options, see the instructions for Linux.
 
 ### Instruction for Windows (Visual Studio)
 
-On Windows, you can use Visual Studio for developemt.  It has
+On Windows, you can use Visual Studio for developemt.  It has support
 for navigating the code base, code browsing, Intellisense,
 and symbolic debugging.
 
