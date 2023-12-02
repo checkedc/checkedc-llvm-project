@@ -119,8 +119,8 @@ directory as \<WORK_DIR\>.
    git clone https://github.com/checkedc/checkedc-llvm-project src
    ```
 
-3. The Checked C language tests live in a folder within `llvm/project`. Change
-to the  `src/llvm/projects/checkedc-wrapper` directory and clone the Checked C
+3. The Checked C language header files and tests are stored in a folder within
+`llvm/project`. Change to the  `src/llvm/projects/checkedc-wrapper` directory and clone the Checked C
 repo:
    ```
    git clone https://github.com/checkedc/checkedc
@@ -174,7 +174,7 @@ is a sibling of your LLVM source tree, like \<WORK_DIR\>/build.
    If you want to speed up build times, you can build a version of clang that only takes one architecture:
    ```
    -DLLVM_TARGETS_TO_BUILD="X86"
-1. ```
+    ```
 
 7. After executing the `cmake` command as above, build the compiler as follows:
 
@@ -185,8 +185,6 @@ is a sibling of your LLVM source tree, like \<WORK_DIR\>/build.
 
    ninja clean      // This command cleans the build directory.
    ```
-
-   ​
 
 ### Instructions for Windows
 
@@ -208,8 +206,8 @@ Unix/Linux directions. Otherwise, follow these directions:
    git clone -c core.autocrlf=false https://github.com/checkedc/checkedc-llvm-project src
    ```
 
-3. The Checked C language tests live in a folder within `llvm\project`. Change
-to the `src\llvm\projects\checkedc-wrapper` directory and clone the Checked C
+3. The Checked C language header files and tests are stored in a folder within `llvm\project`. 
+Change to the `src\llvm\projects\checkedc-wrapper` directory and clone the Checked C
 repo:
 
    ```
