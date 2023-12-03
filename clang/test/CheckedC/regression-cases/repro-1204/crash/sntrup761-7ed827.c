@@ -53924,7 +53924,7 @@ static void Small_random(small *out)
 #ifndef LPR
 
 /* h,(f,ginv) = KeyGen() */
-static void KeyGen(Fq *h,small *f,small *ginv)
+void KeyGen(Fq *h,small *f,small *ginv)
 {
   small g[p];
   Fq finv[p];
@@ -54124,69 +54124,6 @@ static void XEncrypt(Fq *B,int8 *T,const int8 *r,const unsigned char *S,const Fq
 #endif
 # 930 "sntrup761.c"
 
-/* ----- encoding small polynomials (including short polynomials) */
-
-#define Small_bytes ((p+3)/4)
-
-/* these are the only functions that rely on p mod 4 = 1 */
-
-static void Small_encode(unsigned char *s,const small *f)
-{
-  small x;
-  int i;
-
-  for (i = 0;i < p/4;++i) {
-    x = *f++ + 1;
-    x += (*f++ + 1)<<2;
-    x += (*f++ + 1)<<4;
-    x += (*f++ + 1)<<6;
-    *s++ = x;
-  }
-  x = *f++ + 1;
-  *s++ = x;
-}
-
-static void Small_decode(small *f,const unsigned char *s)
-{
-  unsigned char x;
-  int i;
-
-  for (i = 0;i < p/4;++i) {
-    x = *s++;
-    *f++ = ((small)(x&3))-1; x >>= 2;
-    *f++ = ((small)(x&3))-1; x >>= 2;
-    *f++ = ((small)(x&3))-1; x >>= 2;
-    *f++ = ((small)(x&3))-1;
-  }
-  x = *s++;
-  *f++ = ((small)(x&3))-1;
-}
-
-/* ----- encoding general polynomials */
-
-#ifndef LPR
-
-static void Rq_encode(unsigned char *s,const Fq *r)
-{
-  uint16 R[p],M[p];
-  int i;
-
-  for (i = 0;i < p;++i) R[i] = r[i]+q12;
-  for (i = 0;i < p;++i) M[i] = q;
-  Encode(s,R,M,p);
-}
-
-static void Rq_decode(Fq *r,const unsigned char *s)
-{
-  uint16 R[p],M[p];
-  int i;
-
-  for (i = 0;i < p;++i) M[i] = q;
-  Decode(R,s,M,p);
-  for (i = 0;i < p;++i) r[i] = ((Fq)R[i])-q12;
-}
-
-#endif
 
 
 void ZKeyGen(unsigned char *pk,unsigned char *sk)
