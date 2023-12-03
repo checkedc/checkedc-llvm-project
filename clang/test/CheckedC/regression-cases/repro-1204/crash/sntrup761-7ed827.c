@@ -53712,6 +53712,7 @@ static void R3_mult(small *h,const small *f,const small *g)
 /* returns 0 if recip succeeded; else -1 */
 static int R3_recip(small *out,const small *in)
 {
+#if 0
   small f[p+1],g[p+1],v[p+1],r[p+1];
   int i,loop,delta;
   int sign,swap,t;
@@ -53749,8 +53750,10 @@ static int R3_recip(small *out,const small *in)
 
   sign = f[0];
   for (i = 0;i < p;++i) out[i] = sign*v[p-1-i];
-
   return int16_nonzero_mask(delta);
+#endif
+  return 0;
+
 }
 
 #endif
@@ -53926,213 +53929,14 @@ static void Small_random(small *out)
 /* h,(f,ginv) = KeyGen() */
 void KeyGen(Fq *h,small *f,small *ginv)
 {
-  small g[p];
   Fq finv[p];
 
-  for (;;) {
-    Small_random(g);
-    if (R3_recip(ginv,g) == 0) break;
-  }
-  Short_random(f);
-  Rq_recip3(finv,f); /* always works */
-  Rq_mult_small(h,finv,g);
+ Rq_recip3(finv,f); /* always works */
 }
 
-/* c = Encrypt(r,h) */
-static void Encrypt(Fq *c,const small *r,const Fq *h)
-{
-  Fq hr[p];
-
-  Rq_mult_small(hr,h,r);
-  Round(c,hr);
-}
-
-/* r = Decrypt(c,(f,ginv)) */
-static void Decrypt(small *r,const Fq *c,const small *f,const small *ginv)
-{
-  Fq cf[p];
-  Fq cf3[p];
-  small e[p];
-  small ev[p];
-  int mask;
-  int i;
-
-  Rq_mult_small(cf,c,f);
-  Rq_mult3(cf3,cf);
-  R3_fromRq(e,cf3);
-  R3_mult(ev,e,ginv);
-
-  mask = Weightw_mask(ev); /* 0 if weight w, else -1 */
-  for (i = 0;i < w;++i) r[i] = ((ev[i]^1)&~mask)^1;
-  for (i = w;i < p;++i) r[i] = ev[i]&~mask;
-}
 
 #endif
-# 782 "sntrup761.c"
 
-/* ----- NTRU LPRime Core */
-
-#ifdef LPR
-
-/* (G,A),a = KeyGen(G); leaves G unchanged */
-static void KeyGen(Fq *A,small *a,const Fq *G)
-{
-  Fq aG[p];
-
-  Short_random(a);
-  Rq_mult_small(aG,G,a);
-  Round(A,aG);
-}
-
-/* B,T = Encrypt(r,(G,A),b) */
-static void Encrypt(Fq *B,int8 *T,const int8 *r,const Fq *G,const Fq *A,const small *b)
-{
-  Fq bG[p];
-  Fq bA[p];
-  int i;
-
-  Rq_mult_small(bG,G,b);
-  Round(B,bG);
-  Rq_mult_small(bA,A,b);
-  for (i = 0;i < I;++i) T[i] = Top(Fq_freeze(bA[i]+r[i]*q12));
-}
-
-/* r = Decrypt((B,T),a) */
-static void Decrypt(int8 *r,const Fq *B,const int8 *T,const small *a)
-{
-  Fq aB[p];
-  int i;
-
-  Rq_mult_small(aB,B,a);
-  for (i = 0;i < I;++i)
-    r[i] = -int16_negative_mask(Fq_freeze(Right(T[i])-aB[i]+4*w+1));
-}
-
-#endif
-# 822 "sntrup761.c"
-
-/* ----- encoding I-bit inputs */
-
-#ifdef LPR
-
-#define Inputs_bytes (I/8)
-typedef int8 Inputs[I]; /* passed by reference */
-
-static void Inputs_encode(unsigned char *s,const Inputs r)
-{
-  int i;
-  for (i = 0;i < Inputs_bytes;++i) s[i] = 0;
-  for (i = 0;i < I;++i) s[i>>3] |= r[i]<<(i&7);
-}
-
-#endif
-# 838 "sntrup761.c"
-
-/* ----- Expand */
-
-#ifdef LPR
-
-static const unsigned char aes_nonce[16] = {0};
-
-static void Expand(uint32 *L,const unsigned char *k)
-{
-  int i;
-  crypto_stream_aes256ctr((unsigned char *) L,4*p,aes_nonce,k);
-  for (i = 0;i < p;++i) {
-    uint32 L0 = ((unsigned char *) L)[4*i];
-    uint32 L1 = ((unsigned char *) L)[4*i+1];
-    uint32 L2 = ((unsigned char *) L)[4*i+2];
-    uint32 L3 = ((unsigned char *) L)[4*i+3];
-    L[i] = L0+(L1<<8)+(L2<<16)+(L3<<24);
-  }
-}
-
-#endif
-# 859 "sntrup761.c"
-
-/* ----- Seeds */
-
-#ifdef LPR
-
-#define Seeds_bytes 32
-
-static void Seeds_random(unsigned char *s)
-{
-  randombytes(s,Seeds_bytes);
-}
-
-#endif
-# 872 "sntrup761.c"
-
-/* ----- Generator, HashShort */
-
-#ifdef LPR
-
-/* G = Generator(k) */
-static void Generator(Fq *G,const unsigned char *k)
-{
-  uint32 L[p];
-  int i;
-
-  Expand(L,k);
-  for (i = 0;i < p;++i) G[i] = uint32_mod_uint14(L[i],q)-q12;
-}
-
-/* out = HashShort(r) */
-static void HashShort(small *out,const Inputs r)
-{
-  unsigned char s[Inputs_bytes];
-  unsigned char h[Hash_bytes];
-  uint32 L[p];
-
-  Inputs_encode(s,r);
-  Hash_prefix(h,5,s,sizeof s);
-  Expand(L,h);
-  Short_fromlist(out,L);
-}
-
-#endif
-# 901 "sntrup761.c"
-
-/* ----- NTRU LPRime Expand */
-
-#ifdef LPR
-
-/* (S,A),a = XKeyGen() */
-static void XKeyGen(unsigned char *S,Fq *A,small *a)
-{
-  Fq G[p];
-
-  Seeds_random(S);
-  Generator(G,S);
-  KeyGen(A,a,G);
-}
-
-/* B,T = XEncrypt(r,(S,A)) */
-static void XEncrypt(Fq *B,int8 *T,const int8 *r,const unsigned char *S,const Fq *A)
-{
-  Fq G[p];
-  small b[p];
-
-  Generator(G,S);
-  HashShort(b,r);
-  Encrypt(B,T,r,G,A,b);
-}
-
-#define XDecrypt Decrypt
-
-#endif
-# 930 "sntrup761.c"
-
-
-
-void ZKeyGen(unsigned char *pk,unsigned char *sk)
-{
-  Fq h[p];
-  small f[p],v[p];
-
-  KeyGen(h,f,v);
-}
 
 
 #endif /* USE_SNTRUP761X25519 */
