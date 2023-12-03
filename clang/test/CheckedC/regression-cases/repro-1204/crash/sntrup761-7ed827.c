@@ -54187,131 +54187,16 @@ static void Rq_decode(Fq *r,const unsigned char *s)
 }
 
 #endif
-# 994 "sntrup761.c"
 
-/* ----- encoding rounded polynomials */
 
-static void Rounded_encode(unsigned char *s,const Fq *r)
-{
-  uint16 R[p],M[p];
-  int i;
-
-  for (i = 0;i < p;++i) R[i] = ((r[i]+q12)*10923)>>15;
-  for (i = 0;i < p;++i) M[i] = (q+2)/3;
-  Encode(s,R,M,p);
-}
-
-static void Rounded_decode(Fq *r,const unsigned char *s)
-{
-  uint16 R[p],M[p];
-  int i;
-
-  for (i = 0;i < p;++i) M[i] = (q+2)/3;
-  Decode(R,s,M,p);
-  for (i = 0;i < p;++i) r[i] = R[i]*3-q12;
-}
-
-/* ----- encoding top polynomials */
-
-#ifdef LPR
-
-#define Top_bytes (I/2)
-
-static void Top_encode(unsigned char *s,const int8 *T)
-{
-  int i;
-  for (i = 0;i < Top_bytes;++i)
-    s[i] = T[2*i]+(T[2*i+1]<<4);
-}
-
-static void Top_decode(int8 *T,const unsigned char *s)
-{
-  int i;
-  for (i = 0;i < Top_bytes;++i) {
-    T[2*i] = s[i]&15;
-    T[2*i+1] = s[i]>>4;
-  }
-}
-
-#endif
-# 1040 "sntrup761.c"
-
-/* ----- Streamlined NTRU Prime Core plus encoding */
-
-#ifndef LPR
-
-typedef small Inputs[p]; /* passed by reference */
-#define Inputs_random Short_random
-#define Inputs_encode Small_encode
-#define Inputs_bytes Small_bytes
-
-#define Ciphertexts_bytes Rounded_bytes
-#define SecretKeys_bytes (2*Small_bytes)
-#define PublicKeys_bytes Rq_bytes
-
-/* pk,sk = ZKeyGen() */
-static void ZKeyGen(unsigned char *pk,unsigned char *sk)
+void ZKeyGen(unsigned char *pk,unsigned char *sk)
 {
   Fq h[p];
   small f[p],v[p];
 
   KeyGen(h,f,v);
-  Rq_encode(pk,h);
-  Small_encode(sk,f); sk += Small_bytes;
-  Small_encode(sk,v);
 }
 
-/* C = ZEncrypt(r,pk) */
-static void ZEncrypt(unsigned char *C,const Inputs r,const unsigned char *pk)
-{
-  Fq h[p];
-  Fq c[p];
-  Rq_decode(h,pk);
-  Encrypt(c,r,h);
-  Rounded_encode(C,c);
-}
-
-/* r = ZDecrypt(C,sk) */
-static void ZDecrypt(Inputs r,const unsigned char *C,const unsigned char *sk)
-{
-  small f[p],v[p];
-  Fq c[p];
-
-  Small_decode(f,sk); sk += Small_bytes;
-  Small_decode(v,sk);
-  Rounded_decode(c,C);
-  Decrypt(r,c,f,v);
-}
-
-#endif
-# 1089 "sntrup761.c"
-
-/* ----- NTRU LPRime Expand plus encoding */
-
-#ifdef LPR
-
-/* pk,sk = ZKeyGen() */
-static void ZKeyGen(unsigned char *pk,unsigned char *sk)
-{
-  Fq A[p];
-  small a[p];
-
-  XKeyGen(pk,A,a); pk += Seeds_bytes;
-  Rounded_encode(pk,A);
-  Small_encode(sk,a);
-}
-#endif
-
-static void KEM_KeyGen(unsigned char *pk,unsigned char *sk)
-{
-  ZKeyGen(pk,sk);
-}
-
-int crypto_kem_sntrup761_keypair(unsigned char *pk,unsigned char *sk)
-{
-  KEM_KeyGen(pk,sk);
-  return 0;
-}
 
 #endif /* USE_SNTRUP761X25519 */
 
