@@ -54290,19 +54290,6 @@ static void ZDecrypt(Inputs r,const unsigned char *C,const unsigned char *sk)
 
 #ifdef LPR
 
-#define Ciphertexts_bytes (Rounded_bytes+Top_bytes)
-#define SecretKeys_bytes Small_bytes
-#define PublicKeys_bytes (Seeds_bytes+Rounded_bytes)
-
-static void Inputs_random(Inputs r)
-{
-  unsigned char s[Inputs_bytes];
-  int i;
-
-  randombytes(s,sizeof s);
-  for (i = 0;i < I;++i) r[i] = 1&(s[i>>3]>>(i&7));
-}
-
 /* pk,sk = ZKeyGen() */
 static void ZKeyGen(unsigned char *pk,unsigned char *sk)
 {
@@ -54313,95 +54300,11 @@ static void ZKeyGen(unsigned char *pk,unsigned char *sk)
   Rounded_encode(pk,A);
   Small_encode(sk,a);
 }
-
-/* c = ZEncrypt(r,pk) */
-static void ZEncrypt(unsigned char *c,const Inputs r,const unsigned char *pk)
-{
-  Fq A[p];
-  Fq B[p];
-  int8 T[I];
-
-  Rounded_decode(A,pk+Seeds_bytes);
-  XEncrypt(B,T,r,pk,A);
-  Rounded_encode(c,B); c += Rounded_bytes;
-  Top_encode(c,T);
-}
-
-/* r = ZDecrypt(C,sk) */
-static void ZDecrypt(Inputs r,const unsigned char *c,const unsigned char *sk)
-{
-  small a[p];
-  Fq B[p];
-  int8 T[I];
-
-  Small_decode(a,sk);
-  Rounded_decode(B,c);
-  Top_decode(T,c+Rounded_bytes);
-  XDecrypt(r,B,T,a);
-}
-
 #endif
-# 1145 "sntrup761.c"
 
-/* ----- confirmation hash */
-
-#define Confirm_bytes 32
-
-/* h = HashConfirm(r,pk,cache); cache is Hash4(pk) */
-static void HashConfirm(unsigned char *h,const unsigned char *r,const unsigned char *pk,const unsigned char *cache)
-{
-#ifndef LPR
-  unsigned char x[Hash_bytes*2];
-  int i;
-
-  Hash_prefix(x,3,r,Inputs_bytes);
-  for (i = 0;i < Hash_bytes;++i) x[Hash_bytes+i] = cache[i];
-#else
-# 1160 "sntrup761.c"
-  unsigned char x[Inputs_bytes+Hash_bytes];
-  int i;
-
-  for (i = 0;i < Inputs_bytes;++i) x[i] = r[i];
-  for (i = 0;i < Hash_bytes;++i) x[Inputs_bytes+i] = cache[i];
-#endif
-# 1166 "sntrup761.c"
-  Hash_prefix(h,2,x,sizeof x);
-}
-
-/* ----- session-key hash */
-
-/* k = HashSession(b,y,z) */
-static void HashSession(unsigned char *k,int b,const unsigned char *y,const unsigned char *z)
-{
-#ifndef LPR
-  unsigned char x[Hash_bytes+Ciphertexts_bytes+Confirm_bytes];
-  int i;
-
-  Hash_prefix(x,3,y,Inputs_bytes);
-  for (i = 0;i < Ciphertexts_bytes+Confirm_bytes;++i) x[Hash_bytes+i] = z[i];
-#else
-# 1181 "sntrup761.c"
-  unsigned char x[Inputs_bytes+Ciphertexts_bytes+Confirm_bytes];
-  int i;
-
-  for (i = 0;i < Inputs_bytes;++i) x[i] = y[i];
-  for (i = 0;i < Ciphertexts_bytes+Confirm_bytes;++i) x[Inputs_bytes+i] = z[i];
-#endif
-# 1187 "sntrup761.c"
-  Hash_prefix(k,b,x,sizeof x);
-}
-
-/* ----- Streamlined NTRU Prime and NTRU LPRime */
-
-/* pk,sk = KEM_KeyGen() */
 static void KEM_KeyGen(unsigned char *pk,unsigned char *sk)
 {
-  int i;
-
-  ZKeyGen(pk,sk); // sk += SecretKeys_bytes;
-// for (i = 0;i < PublicKeys_bytes;++i) *sk++ = pk[i];
- // randombytes(sk,Inputs_bytes); sk += Inputs_bytes;
- // Hash_prefix(sk,4,pk,PublicKeys_bytes);
+  ZKeyGen(pk,sk);
 }
 
 int crypto_kem_sntrup761_keypair(unsigned char *pk,unsigned char *sk)
