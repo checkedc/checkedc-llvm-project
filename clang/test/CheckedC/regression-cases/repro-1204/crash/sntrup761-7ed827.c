@@ -53798,137 +53798,30 @@ static void Rq_mult3(Fq *h,const Fq *f)
 }
 
 /* out = 1/(3*in) in Rq */
-/* returns 0 if recip succeeded; else -1 */
+/* returns 0 if recip succeeded; ntelse -1 */
 static int Rq_recip3(Fq *out,const small *in)
 {
   Fq f[p+1],g[p+1],v[p+1],r[p+1];
   int i,loop,delta;
   int swap,t;
-  int32 f0,g0;
-  Fq scale;
 
-  for (i = 0;i < p+1;++i) v[i] = 0;
-  for (i = 0;i < p+1;++i) r[i] = 0;
-  r[0] = Fq_recip(3);
-  for (i = 0;i < p;++i) f[i] = 0;
-  f[0] = 1; f[p-1] = f[p] = -1;
-  for (i = 0;i < p;++i) g[p-1-i] = in[i];
-  g[p] = 0;
-
-  delta = 1;
-
-  for (loop = 0;loop < 2*p-1;++loop) {
-    for (i = p;i > 0;--i) v[i] = v[i-1];
-    v[0] = 0;
-
-    swap = int16_negative_mask(-delta) & int16_nonzero_mask(g[0]);
-    delta ^= swap&(delta^-delta);
+   swap = int16_negative_mask(-delta); // & int16_nonzero_mask(g[0]);
     delta += 1;
 
-    for (i = 0;i < p+1;++i) {
-      t = swap&(f[i]^g[i]); f[i] ^= t; g[i] ^= t;
-      t = swap&(v[i]^r[i]); v[i] ^= t; r[i] ^= t;
-    }
 
-    f0 = f[0];
-    g0 = g[0];
-    for (i = 0;i < p+1;++i) g[i] = Fq_freeze(f0*g[i]-g0*f[i]);
-    for (i = 0;i < p+1;++i) r[i] = Fq_freeze(f0*r[i]-g0*v[i]);
-
-    for (i = 0;i < p;++i) g[i] = g[i+1];
-    g[p] = 0;
-  }
-
-  scale = Fq_recip(f[0]);
-  for (i = 0;i < p;++i) out[i] = Fq_freeze(scale*(int32)v[p-1-i]);
 
   return int16_nonzero_mask(delta);
 }
 
 #endif
-# 659 "sntrup761.c"
 
-/* ----- rounded polynomials mod q */
-
-static void Round(Fq *out,const Fq *a)
-{
-  int i;
-  for (i = 0;i < p;++i) out[i] = a[i]-F3_freeze(a[i]);
-}
-
-/* ----- sorting to generate short polynomial */
-
-static void Short_fromlist(small *out,const uint32 *in)
-{
-  uint32 L[p];
-  int i;
-
-  for (i = 0;i < w;++i) L[i] = in[i]&(uint32)-2;
-  for (i = w;i < p;++i) L[i] = (in[i]&(uint32)-3)|1;
-  crypto_sort_uint32(L,p);
-  for (i = 0;i < p;++i) out[i] = (L[i]&3)-1;
-}
-
-/* ----- underlying hash function */
-
-#define Hash_bytes 32
-
-/* e.g., b = 0 means out = Hash0(in) */
-static void Hash_prefix(unsigned char *out,int b,const unsigned char *in,int inlen)
-{
-  unsigned char x[inlen+1];
-  unsigned char h[64];
-  int i;
-
-  x[0] = b;
-  for (i = 0;i < inlen;++i) x[i+1] = in[i];
-  crypto_hash_sha512(h,x,inlen+1);
-  for (i = 0;i < 32;++i) out[i] = h[i];
-}
-
-/* ----- higher-level randomness */
-
-static uint32 urandom32(void)
-{
-  unsigned char c[4];
-  uint32 out[4];
-
-  randombytes(c,4);
-  out[0] = (uint32)c[0];
-  out[1] = ((uint32)c[1])<<8;
-  out[2] = ((uint32)c[2])<<16;
-  out[3] = ((uint32)c[3])<<24;
-  return out[0]+out[1]+out[2]+out[3];
-}
-
-static void Short_random(small *out)
-{
-  uint32 L[p];
-  int i;
-
-  for (i = 0;i < p;++i) L[i] = urandom32();
-  Short_fromlist(out,L);
-}
-
-#ifndef LPR
-
-static void Small_random(small *out)
-{
-  int i;
-
-  for (i = 0;i < p;++i) out[i] = (((urandom32()&0x3fffffff)*3)>>30)-1;
-}
-
-#endif
-# 732 "sntrup761.c"
-
-/* ----- Streamlined NTRU Prime Core */
 
 #ifndef LPR
 
 /* h,(f,ginv) = KeyGen() */
 void KeyGen(Fq *h,small *f,small *ginv)
 {
+
   Fq finv[p];
 
  Rq_recip3(finv,f); /* always works */

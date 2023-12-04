@@ -211,6 +211,15 @@ namespace {
       // will be transformed into an invalid result.
       Expr *OriginalValue;
 
+      Expr *ProtectOriginalValue() {
+        if (ImplicitCastExpr *ImpCast = dyn_cast<ImplicitCastExpr>(OriginalValue)) {
+          return ExprCreatorUtil::CreateImplicitCast(
+                 SemaRef, ImpCast->getSubExpr(), ImpCast->getCastKind(),
+                 ImpCast->getType());
+        } else
+          return OriginalValue;
+      }
+
     public:
       ReplaceLValueHelper(Sema &SemaRef, Expr *LValue, Expr *OriginalValue) :
         BaseTransform(SemaRef),
@@ -224,7 +233,7 @@ namespace {
           return E;
         if (Lex.CompareExpr(V, E) == Lexicographic::Result::Equal) {
           if (OriginalValue)
-            return OriginalValue;
+            return ProtectOriginalValue();
           return ExprError();
         }
         return E;
@@ -236,7 +245,7 @@ namespace {
           return E;
         if (Lex.CompareExprSemantically(M, E)) {
           if (OriginalValue)
-            return OriginalValue;
+            return ProtectOriginalValue();
           return ExprError();
         }
         return E;
@@ -247,7 +256,7 @@ namespace {
           return E;
         if (Lex.CompareExprSemantically(LValue, E)) {
           if (OriginalValue)
-            return OriginalValue;
+            return ProtectOriginalValue();
           return ExprError();
         }
         return E;
@@ -258,12 +267,13 @@ namespace {
           return E;
         if (Lex.CompareExprSemantically(LValue, E)) {
           if (OriginalValue)
-            return OriginalValue;
+            return ProtectOriginalValue();
           return ExprError();
         }
         return E;
       }
 
+      /*
       // Overriding TransformImplicitCastExpr is necessary since TreeTransform
       // does not preserve implicit casts.
       ExprResult TransformImplicitCastExpr(ImplicitCastExpr *E) {
@@ -287,7 +297,7 @@ namespace {
 
         return ExprCreatorUtil::CreateImplicitCast(SemaRef, Child,
                                                    CK, E->getType());
-      }
+      } */
   };
 }
 
@@ -298,6 +308,15 @@ Expr *BoundsUtil::ReplaceLValue(Sema &S, Expr *E, Expr *LValue,
   if (!ExprUtil::FindLValue(S, LValue, E))
     return E;
 
+  /*
+  llvm::outs() << "Replace lvalue in expression:\n";
+  E->dump();
+  llvm::outs() << "LValue:\n";
+  LValue->dump();
+  llvm::outs() << "OriginalValue:\n";
+  OriginalValue->dump();
+  */
+
   // If E uses the value of LValue, but no original value is provided,
   // we know the result is null without needing to transform E.
   if (!OriginalValue)
@@ -306,6 +325,8 @@ Expr *BoundsUtil::ReplaceLValue(Sema &S, Expr *E, Expr *LValue,
   // Account for checked scope information when transforming the expression.
   Sema::CheckedScopeRAII CheckedScope(S, CSS);
 
+//  if (ImplicitCastExpr *ImpCast = dyn_cast<ImplicitCastExpr>(OriginalValue))
+//   OriginalValue = ImpCast->getSubExpr();
   Sema::ExprSubstitutionScope Scope(S); // suppress diagnostics
   ExprResult R = ReplaceLValueHelper(S, LValue, OriginalValue).TransformExpr(E);
   if (R.isInvalid())

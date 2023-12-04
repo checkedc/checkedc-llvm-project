@@ -561,6 +561,10 @@ ExprResult Sema::ImpCastExprToType(Expr *E, QualType Ty,
                                    const CXXCastPath *BasePath,
                                    CheckedConversionKind CCK,
                                    bool isBoundsSafeInterfaceCast) {
+  // llvm::outs() << "Implicit cast of expression to type\n";
+  // E->dump();
+  // Ty->dump();
+  // llvm::outs().flush();
 #ifndef NDEBUG
   if (VK == VK_RValue && !E->isRValue()) {
     switch (Kind) {
@@ -612,6 +616,7 @@ ExprResult Sema::ImpCastExprToType(Expr *E, QualType Ty,
       E = new (Context) CHKCBindTemporaryExpr(E);
   }
 
+
   if (ImplicitCastExpr *ImpCast = dyn_cast<ImplicitCastExpr>(E)) {
     if (ImpCast->getCastKind() == Kind && (!BasePath || BasePath->empty())) {
       ImpCast->setType(Ty);
@@ -625,6 +630,9 @@ ExprResult Sema::ImpCastExprToType(Expr *E, QualType Ty,
   ImplicitCastExpr *ICE = ImplicitCastExpr::Create(Context, Ty, Kind, E, BasePath, VK,
                                                    CurFPFeatureOverrides());
   ICE->setBoundsSafeInterface(isBoundsSafeInterfaceCast);
+  // llvm::outs() << "Resulting cast:\n";
+  // ICE->dump();
+  // llvm::outs().flush();
   return ICE;
 }
 
