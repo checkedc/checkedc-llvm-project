@@ -262,32 +262,6 @@ namespace {
         }
         return E;
       }
-
-      /*
-      // Overriding TransformImplicitCastExpr is necessary since TreeTransform
-      // does not preserve implicit casts.
-      ExprResult TransformImplicitCastExpr(ImplicitCastExpr *E) {
-        // Replace LValue with OriginalValue (if applicable) in the
-        // subexpression of E.
-        ExprResult ChildResult = TransformExpr(E->getSubExpr());
-        if (ChildResult.isInvalid())
-          return ChildResult;
-
-        Expr *Child = ChildResult.get();
-        CastKind CK = E->getCastKind();
-
-        // Only cast children of lvalue to rvalue or array to pointer casts
-        // to an rvalue if necessary. The transformed child expression may
-        // no longer be an lvalue, depending on the original value.
-        // For example, if x is transformed to the original value x + 1, it
-        // does not need to be cast to an rvalue.
-        if (CK == CastKind::CK_LValueToRValue ||
-            CK == CastKind::CK_ArrayToPointerDecay)
-          return ExprCreatorUtil::EnsureRValue(SemaRef, Child);
-
-        return ExprCreatorUtil::CreateImplicitCast(SemaRef, Child,
-                                                   CK, E->getType());
-      } */
   };
 }
 
@@ -298,15 +272,6 @@ Expr *BoundsUtil::ReplaceLValue(Sema &S, Expr *E, Expr *LValue,
   if (!ExprUtil::FindLValue(S, LValue, E))
     return E;
 
-  /*
-  llvm::outs() << "Replace lvalue in expression:\n";
-  E->dump();
-  llvm::outs() << "LValue:\n";
-  LValue->dump();
-  llvm::outs() << "OriginalValue:\n";
-  OriginalValue->dump();
-  */
-
   // If E uses the value of LValue, but no original value is provided,
   // we know the result is null without needing to transform E.
   if (!OriginalValue)
@@ -315,8 +280,6 @@ Expr *BoundsUtil::ReplaceLValue(Sema &S, Expr *E, Expr *LValue,
   // Account for checked scope information when transforming the expression.
   Sema::CheckedScopeRAII CheckedScope(S, CSS);
 
-//  if (ImplicitCastExpr *ImpCast = dyn_cast<ImplicitCastExpr>(OriginalValue))
-//   OriginalValue = ImpCast->getSubExpr();
   Sema::ExprSubstitutionScope Scope(S); // suppress diagnostics
   ExprResult R = ReplaceLValueHelper(S, LValue, OriginalValue).TransformExpr(E);
   if (R.isInvalid())

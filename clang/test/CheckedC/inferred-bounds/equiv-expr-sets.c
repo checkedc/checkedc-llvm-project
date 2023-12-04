@@ -381,8 +381,7 @@ void multiple_assign2(int x, int y) {
   // CHECK-NEXT: {
   // CHECK-NEXT: {
   // CHECK-NEXT: IntegerLiteral {{.*}} 1
-  // Why is a DeclRefExpr to y appearing here?
-  // CHECK: ImplicitCastExpr {{.*}} <LValueToRValue>
+  // CHECK-NEXT: ImplicitCastExpr {{.*}} <LValueToRValue>
   // CHECK-NEXT:   DeclRefExpr {{.*}} 'y'
   // CHECK-NEXT: }
   // CHECK-NEXT: {

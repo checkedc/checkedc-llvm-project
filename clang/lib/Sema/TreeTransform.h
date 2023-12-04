@@ -2652,13 +2652,6 @@ public:
   ExprResult RebuildBinaryOperator(SourceLocation OpLoc,
                                          BinaryOperatorKind Opc,
                                          Expr *LHS, Expr *RHS) {
-    /*
-    llvm::outs() << "Rebuilding binary operator:\n";
-    llvm::outs() << "LHS:\n";
-    LHS->dump();
-    llvm::outs() << "RHS:\n";
-    RHS->dump();
-    */
     return getSema().BuildBinOp(/*Scope=*/nullptr, OpLoc, Opc, LHS, RHS);
   }
 
