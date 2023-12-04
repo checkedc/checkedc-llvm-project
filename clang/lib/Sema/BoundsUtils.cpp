@@ -210,16 +210,6 @@ namespace {
       // If no original value is provided, an expression using the lvalue
       // will be transformed into an invalid result.
       Expr *OriginalValue;
-
-      Expr *ProtectOriginalValue() {
-        if (ImplicitCastExpr *ImpCast = dyn_cast<ImplicitCastExpr>(OriginalValue)) {
-          return ExprCreatorUtil::CreateImplicitCast(
-                 SemaRef, ImpCast->getSubExpr(), ImpCast->getCastKind(),
-                 ImpCast->getType());
-        } else
-          return OriginalValue;
-      }
-
     public:
       ReplaceLValueHelper(Sema &SemaRef, Expr *LValue, Expr *OriginalValue) :
         BaseTransform(SemaRef),
@@ -233,7 +223,7 @@ namespace {
           return E;
         if (Lex.CompareExpr(V, E) == Lexicographic::Result::Equal) {
           if (OriginalValue)
-            return ProtectOriginalValue();
+            return OriginalValue;
           return ExprError();
         }
         return E;
@@ -245,7 +235,7 @@ namespace {
           return E;
         if (Lex.CompareExprSemantically(M, E)) {
           if (OriginalValue)
-            return ProtectOriginalValue();
+            return OriginalValue;
           return ExprError();
         }
         return E;
@@ -256,7 +246,7 @@ namespace {
           return E;
         if (Lex.CompareExprSemantically(LValue, E)) {
           if (OriginalValue)
-            return ProtectOriginalValue();
+            return OriginalValue;
           return ExprError();
         }
         return E;
@@ -267,7 +257,7 @@ namespace {
           return E;
         if (Lex.CompareExprSemantically(LValue, E)) {
           if (OriginalValue)
-            return ProtectOriginalValue();
+            return OriginalValue;
           return ExprError();
         }
         return E;
