@@ -636,7 +636,7 @@ ExprResult Sema::ImpCastExprToType(Expr *E, QualType Ty,
   ImplicitCastExpr *ICE = ImplicitCastExpr::Create(Context, Ty, Kind, Child,
                                                    BasePath, VK,
                                                    CurFPFeatureOverrides());
-  ICE->setBoundsSafeInterface(isBoundsSafeInterfaceCast); q
+  ICE->setBoundsSafeInterface(isBoundsSafeInterfaceCast);
   return ICE;
 }
 
