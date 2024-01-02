@@ -5719,6 +5719,7 @@ public:
 
 private:
   QualType ValidateBoundsExprArgument(Expr *Arg);
+  BoundsDeclFact *FindWhereClauseBounds(WhereClause *WC, const VarDecl *V);
 
 public:
   ExprResult ActOnNullaryBoundsExpr(SourceLocation BoundKWLoc,
@@ -5997,7 +5998,7 @@ public:
   // range bounds are attached to the VarDecl D to avoid recomputing the
   // normalized bounds for D.
   BoundsExpr *NormalizeBounds(const VarDecl *D);
-
+ 
   // If the BoundsDeclFact F has a byte_count or count bounds expression,
   // NormalizeBounds expands it to a range bounds expression.  The expanded
   // range bounds are attached to the BoundsDeclFact F to avoid recomputing
@@ -6006,10 +6007,13 @@ public:
 
   // Returns the declared bounds for the lvalue expression E. Assignments
   // to E must satisfy these bounds. After checking a top-level statement,
-  // the inferred bounds of E must imply these declared bounds.
+  // the inferred bounds of E must imply these declared bounds.  The
+  // WhereClause may have bounds declaration that override the bounds
+  // declared at a variable declaration for E, if E is a variable.
   BoundsExpr *GetLValueDeclaredBounds(Expr *E,
                                       CheckedScopeSpecifier CSS =
-                                        CheckedScopeSpecifier::CSS_Unchecked);
+                                        CheckedScopeSpecifier::CSS_Unchecked,
+                                      WhereClause *WC = nullptr);
 
   //
   // Track variables that in-scope bounds declarations depend upon.

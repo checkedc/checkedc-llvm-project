@@ -47,6 +47,7 @@
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Sema/AvailableFactsAnalysis.h"
 #include "clang/Sema/BoundsUtils.h"
+#include "clang/Sema/BoundsDeclExtent.h"
 #include "clang/Sema/BoundsWideningAnalysis.h"
 #include "clang/Sema/CheckedCAnalysesPrepass.h"
 #include "llvm/ADT/SmallBitVector.h"
@@ -680,6 +681,9 @@ namespace {
 
     ASTContext &Context;
     std::pair<ComparisonSet, ComparisonSet> &Facts;
+
+    // Flow-sensitive bounds declaration information.
+    BoundsDeclExtent FlowSensitiveBoundsDecls;
 
     // Having a BoundsWideningAnalysis object here allows us to easily invoke
     // methods for bounds widening and get back the widened bounds info needed
@@ -2688,6 +2692,7 @@ namespace {
       ReturnBounds(nullptr),
       Context(SemaRef.Context),
       Facts(Facts),
+      FlowSensitiveBoundsDecls(BoundsDeclExtent(SemaRef,Cfg)),
       BoundsWideningAnalyzer(BoundsWideningAnalysis(SemaRef, Cfg,
                                                     Info.BoundsVarsLower,
                                                     Info.BoundsVarsUpper)),
@@ -2716,6 +2721,7 @@ namespace {
       ReturnBounds(nullptr),
       Context(SemaRef.Context),
       Facts(Facts),
+      FlowSensitiveBoundsDecls(BoundsDeclExtent(SemaRef, Cfg)),
       BoundsWideningAnalyzer(BoundsWideningAnalysis(SemaRef, nullptr,
                                                     Info.BoundsVarsLower,
                                                     Info.BoundsVarsUpper)),
@@ -2944,6 +2950,9 @@ namespace {
      BoundsContextTy InitialObservedBounds;
      bool InBundledBlock = false;
 
+     // Determine the extent of flow-sensitive bounds declarations
+     FlowSensitiveBoundsDecls.compute(FunctionDeclaration);
+     
      // Run the bounds widening analysis on this function.
      BoundsWideningAnalyzer.WidenBounds(FD, NestedElements);
      if (S.getLangOpts().DumpWidenedBounds)
@@ -4491,11 +4500,24 @@ namespace {
       BoundsMapTy BoundsWidenedAndNotKilled =
         BoundsWideningAnalyzer.GetBoundsWidenedAndNotKilled(Block, S);
 
+      // If the current statement has a WhereClause, it may override the
+      // declared bounds for a variable.
+      WhereClause *WC  = nullptr;
+      if (const NullStmt *NS = dyn_cast<NullStmt>(S))
+        WC = NS->getWhereClause();
+      else if (const ValueStmt *VS = dyn_cast<ValueStmt>(S))
+        WC = VS->getWhereClause();
+      else if (const DeclStmt* DS = dyn_cast<DeclStmt>(S)) {
+        if (DS->isSingleDecl())
+          if (const VarDecl *VD = dyn_cast<VarDecl>(DS->getSingleDecl()))
+            WC = VD->getWhereClause();
+      }
+
       for (auto const &Pair : State.ObservedBounds) {
         const AbstractSet *A = Pair.first;
         BoundsExpr *ObservedBounds = Pair.second;
         BoundsExpr *DeclaredBounds =
-          this->S.GetLValueDeclaredBounds(A->GetRepresentative(), CSS);
+          this->S.GetLValueDeclaredBounds(A->GetRepresentative(), CSS, WC);
         if (!DeclaredBounds || DeclaredBounds->isUnknown())
           continue;
         if (SkipBoundsValidation(A, CSS, State))
@@ -4503,6 +4525,9 @@ namespace {
         if (ObservedBounds->isUnknown())
           DiagnoseUnknownObservedBounds(S, A, DeclaredBounds, State);
         else {
+          // TODO: this seems incorrect. It is suppressing warning messages
+          // for statements with widened bounds that have invertible assignments
+          // affecting bounds.
           // If the lvalue expressions in A are variables represented by a
           // declaration Var, we should issue diagnostics for observed bounds
           // if Var is not in the set BoundsWidenedAndKilled which represents
@@ -4658,12 +4683,13 @@ namespace {
       SourceRange SrcRange = St->getSourceRange();
       auto BDCType = Sema::BoundsDeclarationCheck::BDC_Statement;
 
-      // For a declaration, show the diagnostic message that starts at the
+      // For a declaration of V, show the diagnostic message that starts at the
       // location of v rather than the beginning of St and return.  If the
       // message starts at the beginning of a declaration T v = e, then extra
       // diagnostics may be emitted for T.
       SourceLocation Loc = St->getBeginLoc();
-      if (V && isa<DeclStmt>(St)) {
+      DeclStmt *DS = dyn_cast<DeclStmt>(St);
+      if (V && DS && DS->isSingleDecl() && DS->getSingleDecl() == V) {
         Loc = V->getLocation();
         BDCType = Sema::BoundsDeclarationCheck::BDC_Initialization;
         S.Diag(Loc, DiagId) << BDCType << A->GetRepresentative()
@@ -4790,7 +4816,7 @@ namespace {
 
     // UpdateAfterAssignment updates the checking state after the lvalue
     // expression LValue is updated in an assignment E of the form
-    // LValue = Src.
+    // LValue = Src.I[
     // UpdateAfterAssignment also returns updated bounds for Src.
     //
     // TargetBounds are the bounds for the target of LValue.
@@ -4829,7 +4855,7 @@ namespace {
       Expr *OriginalValue = GetOriginalValue(LValue, Target, Src,
                               State.EquivExprs, OriginalValueUsesLValue);
 
-      // If LValue has target bounds, get the AbstractSet that contains LValue.
+      // Get the AbstractSet that contains LValue.
       // LValueAbstractSet will be used in UpdateBoundsAfterAssignment to
       // record the observed bounds of all lvalue expressions in this set.
       // If LValue belongs to an LValueAbstractSet, then the rvalue expression
@@ -4848,9 +4874,16 @@ namespace {
       // the bounds context after this assignment, the target bounds for arr[0]
       // are bounds(*arr, *arr + 0). Therefore, (temporary) equality should be
       // recorded between *arr and "xyz", rather than between arr[0] and "xyz".
+
       const AbstractSet *LValueAbstractSet = nullptr;
       Expr *EqualityTarget = Target;
-      if (TargetBounds && !TargetBounds->isUnknown()) {
+      bool IsFlowSensitive = false;
+      if (DeclRefExpr *DR = dyn_cast<DeclRefExpr>(LValue))
+        if (VarDecl *V = dyn_cast<VarDecl>(DR->getDecl()))
+          if (FlowSensitiveBoundsDecls.hasWhereBoundsDecl(V))
+            IsFlowSensitive = true;
+
+      if ((TargetBounds && !TargetBounds->isUnknown()) || IsFlowSensitive) {
         LValueAbstractSet = AbstractSetMgr.GetOrCreateAbstractSet(LValue);
         Expr *Rep = LValueAbstractSet->GetRepresentative();
         EqualityTarget =
@@ -6844,13 +6877,30 @@ BoundsExpr *Sema::NormalizeBounds(const BoundsDeclFact *F) {
   return ExpandedBounds;
 }
 
+BoundsDeclFact *Sema::FindWhereClauseBounds(WhereClause *WC, const VarDecl *V) {
+  if (!WC)
+    return nullptr;
+
+  for (WhereClauseFact *Fact : WC->getFacts()) {
+    if (BoundsDeclFact *F = dyn_cast<BoundsDeclFact>(Fact)) {
+      if (F->getVarDecl() == V)
+        return F;
+    }
+  }
+
+  return nullptr;
+}
+
 // Returns the declared bounds for the lvalue expression E. Assignments
 // to E must satisfy these bounds. After checking a top-level statement,
 // the inferred bounds of E must imply these declared bounds.
-BoundsExpr *Sema::GetLValueDeclaredBounds(Expr *E, CheckedScopeSpecifier CSS) {
+BoundsExpr *Sema::GetLValueDeclaredBounds(Expr *E, CheckedScopeSpecifier CSS, WhereClause *WC) {
   if (DeclRefExpr *DRE = VariableUtil::GetLValueVariable(*this, E)) {
-    if (const VarDecl *V = dyn_cast_or_null<VarDecl>(DRE->getDecl()))
-      return NormalizeBounds(V);
+    if (VarDecl *V = dyn_cast_or_null<VarDecl>(DRE->getDecl()))
+      if (const BoundsDeclFact *F = FindWhereClauseBounds(WC, V))
+        return NormalizeBounds(F);
+      else
+        return NormalizeBounds(V);
   }
 
   PrepassInfo Info;

@@ -3655,6 +3655,8 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
         }
       }
 
+      // TODO: handle type arguments for Checked C generic type applications here.
+
       // Need to support trailing type qualifiers (e.g. "id<p> const").
       // If a type specifier follows, it will be diagnosed elsewhere.
       continue;

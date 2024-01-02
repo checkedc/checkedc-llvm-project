@@ -62,8 +62,8 @@ namespace clang {
     // Returns the NamedDecl, if any, associated with the Representative
     // expression for this AbstractSet.
     // This NamedDecl is used by bounds declaration checking to emit
-    // diagnostics for statements that invalidate the inferred bounds of
-    // the lvalue expressions in the AbstractSet.
+    // diagnostics for statements that invalidate the required (declared)
+    // bounds of the lvalue expressions in the AbstractSet.
     const NamedDecl *GetDecl() const {
       if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(Representative))
         return DRE->getDecl();
