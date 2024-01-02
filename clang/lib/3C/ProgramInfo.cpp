@@ -945,7 +945,6 @@ FVConstraint *ProgramInfo::getStaticFuncConstraint(std::string FuncName,
 // depend on other constraint vars that are directly assigned WILD.
 bool ProgramInfo::computeInterimConstraintState(
     const std::set<std::string> &FilePaths) {
-
   // Get all the valid vars of interest i.e., all the Vars that are present
   // in one of the files being compiled.
   CAtoms ValidVarsVec;
@@ -963,7 +962,6 @@ bool ProgramInfo::computeInterimConstraintState(
         ValidVarsVec.insert(ValidVarsVec.begin(), Tmp.begin(), Tmp.end());
     }
   }
-
   // Make that into set, for efficiency.
   std::set<Atom *> ValidVarsS;
   ValidVarsS.insert(ValidVarsVec.begin(), ValidVarsVec.end());
@@ -980,7 +978,6 @@ bool ProgramInfo::computeInterimConstraintState(
   std::transform(AllValidVars.begin(), AllValidVars.end(),
                  std::inserter(AllValidVarsKey, AllValidVarsKey.end()),
                  GetLocOrZero);
-
   CState.clear();
   std::set<Atom *> DirectWildVarAtoms;
   CS.getChkCG().getSuccessors(CS.getWild(), DirectWildVarAtoms);
@@ -1061,6 +1058,24 @@ bool ProgramInfo::computeInterimConstraintState(
 
   computePtrLevelStats();
   return true;
+}
+
+void ProgramInfo::clear() {
+  TheMultiDeclsInfo.clear();
+  Variables.clear();
+  TypedefVars.clear();
+  ExprConstraintVars.clear();
+  ExprLocations.clear();
+  DeletedAtomLocations.clear();
+  CS.clear();
+  ExternGVars.clear();
+  ExternalFunctionFVCons.clear();
+  StaticFunctionFVCons.clear();
+  GlobalVariableSymbols.clear();
+  CState.clear();
+  ArrBInfo.clear();
+  TypeParamBindings.clear();
+  TranslationUnitIdxMap.clear();
 }
 
 void ProgramInfo::insertIntoPtrSourceMap(PersistentSourceLoc PSL,

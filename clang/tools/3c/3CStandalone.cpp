@@ -93,7 +93,8 @@ static cl::opt<std::string> OptOutputPostfix(
     "output-postfix",
     cl::desc("String to insert into the names of updated files just before the "
              "extension (e.g., with -output-postfix=checked, foo.c -> "
-             "foo.checked.c)"),
+             "foo.checked.c.)"
+              "Pass null to overwrite the file with CheckedC annotations."),
     cl::init("-"), cl::cat(_3CCategory));
 
 static cl::opt<std::string> OptOutputDir(
@@ -464,5 +465,17 @@ int main(int argc, const char **argv) {
 
   // Even if all passes succeeded, we could still have a diagnostic verification
   // failure.
+
+  _3CInterface.resetInterface();
+  _3CInterface.parseASTs();
+  _3CInterface.addVariables();
+  _3CInterface.buildInitialConstraints();
+  _3CInterface.solveConstraints();
+
+  auto Something = _3CInterface.getWildPtrsInfo();
+  auto ID = Something.RootWildAtomsWithReason.begin()->first;
+  //_3CInterface.makeSinglePtrNonWild(ID);
+  auto Again = _3CInterface.getWildPtrsInfo().RootWildAtomsWithReason;
+
   return _3CInterface.determineExitCode();
 }
