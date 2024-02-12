@@ -5,14 +5,14 @@
 // RUN: 3c -base-dir=%S -alltypes -output-dir=%t.checked -rerun %s -- -Xclang -verify
 // RUN: 3c -base-dir=%t.checked -alltypes %t.checked/macro_function_call_rerun.c -rerun -- -Xclang -verify | diff %t.checked/macro_function_call_rerun.c -
 
+// 3C emits a warning if it fails inserting a cast. Ensure the test fails if
+// this happens.
+// expected-no-diagnostics
+
 // Test fix for https://github.com/correctcomputation/checkedc-clang/issues/439
 // We cannot insert casts on function calls inside macros, so constraints must
 // be generated in way that these calls are accepted by CheckedC without
 // additional casts.
-
-// 3C emits a warning if it fails inserting a cast. Ensure the test fails if
-// this happens.
-// expected-no-diagnostics
 
 // Unsafe call in macro. This would require an _Assume_bounds_cast, but we
 // can't insert it.  Constraints are generated so that the cast isn't needed.

@@ -229,8 +229,6 @@ private:
   Constraints CS;
   // Is the ProgramInfo persisted? Only tested in asserts. Starts at true.
   bool Persisted;
-  std::mutex clearCState;
-
 
   // Map of global decls for which we don't have a definition, the keys are
   // names of external vars, the value is whether the def

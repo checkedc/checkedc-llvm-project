@@ -49,21 +49,21 @@ void AsCCCommands(const Diagnostic &D, std::vector<Command> &OutCommands) {
 }
 
 bool Is3CCommand(const ExecuteCommandParams &Params) {
-  return (Params.command==Command::_3C_APPLY_ONLY_FOR_THIS||
-         Params.command==Command::_3C_APPLY_FOR_ALL);
+  return (Params.command == Command::_3C_APPLY_ONLY_FOR_THIS ||
+         Params.command == Command::_3C_APPLY_FOR_ALL);
 }
 
 bool ExecuteCCCommand(const ExecuteCommandParams &Params,
                       std::string &ReplyMessage,
                       _3CInterface &CcInterface) {
   ReplyMessage = "Checked C Pointer Modified.";
-  if (Params.command==Command::_3C_APPLY_ONLY_FOR_THIS) {
+  if (Params.command == Command::_3C_APPLY_ONLY_FOR_THIS) {
     int PtrId = Params._3CFix->ptrID;
     CcInterface.makeSinglePtrNonWild(PtrId);
     log("Single Pointer Wild.");
     return true;
   }
-  if (Params.command==Command::_3C_APPLY_FOR_ALL){
+  if (Params.command == Command::_3C_APPLY_FOR_ALL){
     int PtrId = Params._3CFix->ptrID;
     CcInterface.invalidateWildReasonGlobally(PtrId);
     log("Global Pointer Wild.");

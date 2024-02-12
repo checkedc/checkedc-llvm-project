@@ -19,12 +19,12 @@
 class AVarBoundsConflictResolver {
 public:
     // Fill WorkList with conflicting bounds. This list will be later used to
-    // propogate the conflicts.
+    // propagate the conflicts.
     void seedInitialWorkList(AVarBoundsInfo *BI,
                              AVarGraph &BKGraph,
                              std::set<BoundsKey> &WorkList);
     
-    // Using the WorkList, propogate the conflicts to all conncted Nodes in the graph
+    // Using the WorkList, propagate the conflicts to all conncted Nodes in the graph
     void propogateConflicts(const BoundsKey &N,
                             AVarBoundsInfo *BI,
                             AVarGraph &BKGraph,

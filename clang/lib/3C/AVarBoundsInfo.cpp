@@ -1782,7 +1782,10 @@ PVConstraint *AVarBoundsInfo::getConstraintVariable(const ProgramInfo *PI,
   const auto &VariableMap = DeclVarMap.right();
   if (VariableMap.find(BK) != VariableMap.end()) {
     const PersistentSourceLoc &PSL = VariableMap.at(BK);
-    return dyn_cast<PVConstraint>(PI->getVarMap().at(PSL));
+    if (PI->getVarMap().count(PSL) > 0)
+        return dyn_cast<PVConstraint>(PI->getVarMap().at(PSL));
+    else
+        return nullptr;
   }
 
   // Function parameters

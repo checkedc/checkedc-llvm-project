@@ -191,6 +191,8 @@ public:
     TmpBoundsKey.clear();
     ArrPointersWithArithmetic.clear();
   }
+
+  // Clear all bounds related stats.
   void clear();
 
   typedef std::tuple<std::string, std::string, bool, unsigned> ParamDeclType;
@@ -220,7 +222,7 @@ public:
   // Insert the variable into the system.
   void insertVariable(clang::Decl *D);
 
-  // Make a BoundsKey as invalid.
+  // Mark a BoundsKey as invalid.
   void insertInToImpossibleBounds(BoundsKey BK) { PointersWithImpossibleBounds.insert(BK); }
 
   // Get variable helpers. These functions will fatal fail if the provided
@@ -234,10 +236,13 @@ public:
   // Generate a random bounds key to be used for inference.
   BoundsKey getRandomBKey();
 
+  // Returns a reference to the ProgVarGraph graph.
   AVarGraph &getProgVarGraph() { return ProgVarGraph; }
 
+  // Returns a reference to the CtxSensProgVarGraph graph.
   AVarGraph &getCtxSensProgVarGraph() { return CtxSensProgVarGraph; }
 
+  // Returns a reference to the RevCtxSensProgVarGraph graph.
   AVarGraph &getRevCtxSensProgVarGraph() { return RevCtxSensProgVarGraph; }
 
   // Add Assignments between variables. These methods will add edges between

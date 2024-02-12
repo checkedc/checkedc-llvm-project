@@ -115,6 +115,7 @@ private:
 
   // Are constraints already built?
   bool ConstraintsBuilt;
+  // Remove all constraints sharing the same reason as ConstraintToRemove.
   void invalidateAllConstraintsWithReason(Constraint *ConstraintToRemove);
 };
 

@@ -479,10 +479,6 @@ int main(int argc, const char **argv) {
     _3CInterface.buildInitialConstraints();
     _3CInterface.solveConstraints();
   }
-  // auto Something = _3CInterface.getWildPtrsInfo();
-  // auto ID = Something.RootWildAtomsWithReason.begin()->first;
-  // //_3CInterface.makeSinglePtrNonWild(ID);
-  // auto Again = _3CInterface.getWildPtrsInfo().RootWildAtomsWithReason;
 
   return _3CInterface.determineExitCode();
 }

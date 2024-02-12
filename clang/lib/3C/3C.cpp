@@ -744,7 +744,7 @@ void _3CInterface::invalidateAllConstraintsWithReason(
     assert(dyn_cast<Geq>(ToDelCons) && "We can only delete Geq constraints.");
     Geq *TCons = dyn_cast<Geq>(ToDelCons);
     auto *Vatom = dyn_cast<VarAtom>(TCons->getLHS());
-    assert(Vatom != nullptr && "Equality constraint with out VarAtom as LHS");
+    assert(Vatom != nullptr && "Equality constraint without VarAtom as LHS");
     VarAtom *VS = CS.getOrCreateVar(Vatom->getLoc(), "q", VarAtom::V_Other);
     VS->getAllConstraints().erase(TCons);
     delete (ToDelCons);
@@ -761,7 +761,7 @@ bool _3CInterface::makeSinglePtrNonWild(ConstraintKey TargetPtr) {
 
   CVars OldWildPtrs = PtrDisjointSet.AllWildAtoms;
 
-  //Delete the constraint that makes the target non-wild
+  // Delete the constraint that makes the target non-wild
   VarAtom *VA = CS.getOrCreateVar(TargetPtr, "q", VarAtom::V_Other);
   Geq NewE(VA, CS.getWild(), ReasonLoc());
   Constraint *OriginalConstraint = *CS.getConstraints().find(&NewE);
@@ -774,7 +774,6 @@ bool _3CInterface::makeSinglePtrNonWild(ConstraintKey TargetPtr) {
   CS.resetEnvironment();
 
   // Solve the constraints.
-  //assert (CS == GlobalProgramInfo->getConstraints());
   runSolver(*GlobalProgramInfo, FilePaths);
 
   // Compute new disjoint set.
