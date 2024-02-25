@@ -751,6 +751,8 @@ void _3CInterface::invalidateAllConstraintsWithReason(
   }
 }
 
+// This function is designed to be thread-safe for concurrent invocation
+// by the user from vscode. The mutex ensures that data races are prevented.
 bool _3CInterface::makeSinglePtrNonWild(ConstraintKey TargetPtr) {
   std::lock_guard<std::mutex> Lock(InterfaceMutex);
   CVars RemovePtrs;
@@ -791,6 +793,8 @@ bool _3CInterface::makeSinglePtrNonWild(ConstraintKey TargetPtr) {
   return !RemovePtrs.empty();
 }
 
+// This function, like makeSinglePtrNonWild, requires the same level of
+// thread-safety to support concurrent invocation by the user from vscode.
 bool _3CInterface::invalidateWildReasonGlobally(ConstraintKey PtrKey) {
   std::lock_guard<std::mutex> Lock(InterfaceMutex);
 
@@ -804,6 +808,9 @@ bool _3CInterface::invalidateWildReasonGlobally(ConstraintKey PtrKey) {
 
   // Delete ALL the constraints that have the same given reason.
   VarAtom *VA = CS.getOrCreateVar(PtrKey, "q", VarAtom::V_Other);
+  // Here we use Geq even though a constraint can never be > WILD.
+  // This is done to simplify the code by using already exising constraint
+  // rather than creating a new one just for equating to WILD.
   Geq NewE(VA, CS.getWild(), ReasonLoc());
   Constraint *OriginalConstraint = *CS.getConstraints().find(&NewE);
   invalidateAllConstraintsWithReason(OriginalConstraint);
