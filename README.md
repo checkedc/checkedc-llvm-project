@@ -1,4 +1,6 @@
-# The Checked C clang repo
+# Checked C clang repo (ARCHIVED)
+
+**This was a fork of Checked C clang used from 2021-2024. The changes have been merged into the original [Checked C clang repo]([https://github.com/checkedc/checkedc-clang).**
 
 This repo contains a version of the LLVM/Clang toolchain that has been modified to support Checked C. 
 Checked C extends C with bounds checking and improved type-safety.
