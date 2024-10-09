@@ -9151,6 +9151,12 @@ static bool IsInvalidCmseNSCallConversion(Sema &S, QualType FromType,
 // FIXME: add a couple examples in this comment.
 static Sema::AssignConvertType
 checkPointerTypesForAssignment(Sema &S, QualType LHSType, QualType RHSType) {
+  if (!LHSType.isCanonical())
+    LHSType = LHSType.getCanonicalType();
+
+  if (!RHSType.isCanonical())
+    RHSType = RHSType.getCanonicalType();
+
   assert(LHSType.isCanonical() && "LHS not canonicalized!");
   assert(RHSType.isCanonical() && "RHS not canonicalized!");
 
